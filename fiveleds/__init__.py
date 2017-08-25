@@ -371,7 +371,7 @@ class opage():
             the message - self.MM
         """
         if len(MM) > 0:
-            self.MM = MM.translate(self.ttable)
+            self.MM = MM
             self.modified()
         return self.MM
 
@@ -405,7 +405,7 @@ class opage():
         string:
             formatted packet string
         """
-        return '<F' + self.FX + '><M' + self.MX + '><W' + self.WX + '><F' + self.FY + '>' + self.MM
+        return '<F' + self.FX + '><M' + self.MX + '><W' + self.WX + '><F' + self.FY + '>' + self.MM.translate(self.ttable)
 
 
 class fiveleds():
