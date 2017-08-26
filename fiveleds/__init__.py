@@ -465,7 +465,6 @@ class fiveleds():
             try:
                 with open(self.config, "rb") as f:
                     self.lines,self.schedules,self.defaultPage = pickle.load(f)
-                break
             except:
                 pass
 
