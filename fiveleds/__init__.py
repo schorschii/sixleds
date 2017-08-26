@@ -453,14 +453,21 @@ class fiveleds():
         if  os.path.isfile(self.config):
             # Clear file
             os.remove(self.config)
-        with open(self.config, "wb") as f:
-            pickle.dump((self.lines,self.schedules,self.defaultPage), f)
-
+        try:
+            with open(self.config, "wb") as f:
+                pickle.dump((self.lines,self.schedules,self.defaultPage), f)
+        except IOError as e:
+            logger.warning("Failed to save config: I/O error({0}): {1}".format(e.errno, e.strerror))
+    
     def confget(self):
         '''Retrieve the config from the disk'''
         if os.path.isfile(self.config):
-            with open(self.config, "rb") as f:
-                self.lines,self.schedules,self.defaultPage = pickle.load(f) 
+            try:
+                with open(self.config, "rb") as f:
+                    self.lines,self.schedules,self.defaultPage = pickle.load(f)
+                break
+            except:
+                pass
 
     def isopen(self):
         '''Check if serial interface is open
