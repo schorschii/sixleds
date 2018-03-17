@@ -1,5 +1,4 @@
-fiveleds - LED Display Library
-==============================
+# fiveleds - LED Display Library
 
 A library to control the LED display in the 57North Hackerpspace
 
@@ -11,8 +10,7 @@ This fiveleds object will hold an array of display lines and pages, and an array
 
 An on disk backup will be loaded at creation and stored after every change, 
 
-Functionality
-=============
+## Functionality
 
 Each line setup by the display can have multiple pages controlled buy the fiveleds.updateline Function.
 

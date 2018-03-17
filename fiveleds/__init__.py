@@ -5,6 +5,8 @@ import os, sys, serial, logging
 from time import sleep, localtime, strftime
 from datetime import datetime
 import _pickle as pickle
+import paho.mqtt.client as mqtt
+
 
 class dt(datetime):
     ''' Datetime Subclass
@@ -410,13 +412,14 @@ class opage():
 
 class fiveleds():
     """A Class to store the lcd setting for the display in the space."""
-
+    
     lines = {'1':{}}
     schedules = {}
     defaultPage = 'A'
 
-    def __init__(self, dev='/dev/ttyUSB0', conf='~/fiveleds', device=0x01):
-        ''' Creat the connection to the display
+
+    def __init__(self, dev='/dev/ttyUSB0', conf='/var/lib/fiveleds/config', device=0x01):
+        ''' Create the connection to the display
         
         Set up serial connections.
         reload the config saved
@@ -426,9 +429,10 @@ class fiveleds():
         dev: string, default='/dev/ttyUSB0'
             The serial device the display is connected to.
 
-        conf: string, default='~/fiveleds'
-            The saved configuration for the display will add '-<devive>.conf'
+        conf: string, default='/var/lib/fiveleds/status'
+            The saved configuration for the display will add '-<device>.conf'
             to whatever you enter here.
+            NOTE! unsire the directory exists and is +wr by service user and group.
         device: byte, default=0x01
             The device identifier 
 
@@ -438,15 +442,30 @@ class fiveleds():
             The fiveleds Object
         '''
         self.device=device
-        self.ser = serial.Serial(
-            port=dev,
-            baudrate=9600,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS
-        )
-        self.config = os.path.expanduser(conf + '-%02x.conf' % self.device)
-        self.confget()
+        try
+            self.ser = serial.Serial(
+                port=dev,
+                baudrate=9600,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                bytesize=serial.EIGHTBITS
+            )
+        except SerialException as e:
+            self.error ="Failed to connect to Display on {0}: Serial Error{1}: {2}".format(dev, e.errno, e.strerror) 
+            logger.warning(self.error)
+            self.ser = None
+
+        if self.connected():
+            self.config = os.path.expanduser(conf + '-%02x.conf' % self.device)
+            self.confget()
+
+    def connected():
+        '''Is the display connected
+        Return
+        ------
+        :bool: 
+            True Connected to display | False Not connected '''
+        return True if isinstance(self.ser, serial.Serial) else False
 
     def confput(self):
         '''Save the current config to disk'''

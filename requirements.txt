@@ -1,0 +1,8 @@
+DateTime==4.2
+future==0.16.0
+iso8601==0.1.12
+paho-mqtt==1.3.1
+pkg-resources==0.0.0
+pytz==2017.3
+PyYAML==3.12
+serial==0.0.15
