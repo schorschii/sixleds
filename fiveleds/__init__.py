@@ -647,8 +647,8 @@ class fiveleds():
 
 
 
-    def brighness(self, bn='D'):
-        """Modify the brighness of the screen 
+    def brightness(self, bn='D'):
+        """Modify the brightness of the screen 
         
         Parameter
         ------
