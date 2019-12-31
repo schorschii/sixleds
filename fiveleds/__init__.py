@@ -764,6 +764,48 @@ current : show current config
 
    help : display this
    exit : as it says
+
+Magic Strings
+-------------
+Your pages can contain the following functional strings:
+
+<AA> : 5x7 (normal size)
+<AB> : 6x7 (bold size)
+<AC> : 4x7 (narrow size)
+<AD> : 7x13 (large size)
+<AE> : 5x8 (long size)
+
+<BA> : Bell 0.5 sec
+...
+<BZ> : Bell 13 sec
+
+<CA> : Dim Red
+<CB> : Red
+<CC> : Bright Red
+<CD> : Dim Green
+<CE> : Green
+<CF> : Bright Green
+<CG> : Dim Orange
+<CH> : Orange
+<CI> : Bright Orange
+<CJ> : Yellow
+<CK> : Lime
+<CL> : Inversed Red
+<CM> : Inversed Green
+<CN> : Inversed Orange
+<CP> : Red on Dim Green
+<CQ> : Green on Dim Red
+<CR> : R/Y/G
+<CS> : Rainbow
+
+<Gxn> : Insert Graphic
+ -> x : A..P
+ -> n : 1..8
+
+<KD> : Insert Date
+<KT> : Insert Time
+
+<Uxx> : European Caracter (00..7F)
 '''
 
 
