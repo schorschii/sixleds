@@ -10,11 +10,11 @@ import paho.mqtt.client as mqtt
 
 class dt(datetime):
     ''' Datetime Subclass
-    A datetime object with a special output for the display scedule
-    k'''
+    A datetime object with a special output for the display schedule
+    '''
 
     def sched(self):
-        """Output the date in the format for the display .
+        """Output the date in the format for the display.
 
         Returns
         ------
@@ -820,7 +820,7 @@ Your pages can contain the following functional strings:
             exit()
 
         elif cmd == 'help':
-            prtint(help)
+            print(help)
 
         elif cmd == 'time':
             ld.setclock()
