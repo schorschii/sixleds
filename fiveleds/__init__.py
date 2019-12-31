@@ -671,6 +671,22 @@ class fiveleds():
 
         return self.response()
 
+    def setid(self, newid):
+        """Will set the ID on the display
+
+        Return
+        ------
+        bool:
+            true on success
+        """
+        data = "<ID><%02d><E>" % int(newid)
+        logging.info("Send: " + data)
+        self.ser.write(bytes(data, 'ASCII'))
+        if self.response(expected="%02d" % int(newid)):
+            logging.info("ID set - OK")
+        else:
+            logging.info("ID set - Failed")
+
     def send(self, packet):
         """Send the packet to the display and return the response
 
@@ -732,22 +748,23 @@ def main():
     help = '''An interface to the display Configuration:
 
 Commands
-------
-   help : Display this
+--------
+   help : display this
 
+  setid : set device ID
    page : edit or create a page
-  sched : Edit or create a schedule
-current : Show current config
-   push : Push changes to display
+  sched : edit or create a schedule
+current : show current config
+   push : push changes to display
 
-     B+ : Full brightness
-     B- : Lowest brightness
+     B+ : full brightness
+     B- : lowest brightness
 default : configure the default run page when no schedules active
-   time : Set the RTC
+   time : set the RTC
 
       * : will push a typed packet to the display
 
-   exit : As it says
+   exit : as it says
 '''
 
 
@@ -772,6 +789,10 @@ default : configure the default run page when no schedules active
 
         elif cmd == 'B-':
             ld.send("<BD>")
+
+        elif cmd == 'setid':
+            newid = input('New ID (1..255): ')
+            ld.setid(newid=newid)
 
         elif cmd == 'page':
             page = input('Page (A..Z): ')
