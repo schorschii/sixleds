@@ -442,7 +442,7 @@ class fiveleds():
             The fiveleds Object
         '''
         self.device=device
-        try
+        try:
             self.ser = serial.Serial(
                 port=dev,
                 baudrate=9600,
@@ -459,7 +459,7 @@ class fiveleds():
             self.config = os.path.expanduser(conf + '-%02x.conf' % self.device)
             self.confget()
 
-    def connected():
+    def connected(self):
         '''Is the display connected
         Return
         ------
@@ -497,7 +497,7 @@ class fiveleds():
         '''
         return self.ser.isOpen()
 
-    def close():
+    def close(self):
         '''Close the serial interface'''
         return self.ser.close()
     
