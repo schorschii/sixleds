@@ -657,7 +657,6 @@ class fiveleds():
         'C' = 50%
         'D' = 25%
 
-
         Return
         ------
         bool:
@@ -665,9 +664,11 @@ class fiveleds():
         """
         if len(bn) == 1 and bn in 'ABCD':
             if self.send('<B' + bn + '>' ):
-                logging.info("RTC set - OK")
+                logging.info("Brightness set - OK")
             else:
-                logging.info("RTC set - Failed")
+                logging.info("Brightness set - Failed")
+        else:
+            print("Invalid brightness")
 
         return self.response()
 
@@ -749,21 +750,19 @@ def main():
 
 Commands
 --------
-   help : display this
-
   setid : set device ID
+ bright : change brightness
+default : configure the default run page when no schedules active
+   time : set the RTC
+
    page : edit or create a page
   sched : edit or create a schedule
 current : show current config
    push : push changes to display
 
-     B+ : full brightness
-     B- : lowest brightness
-default : configure the default run page when no schedules active
-   time : set the RTC
-
       * : will push a typed packet to the display
 
+   help : display this
    exit : as it says
 '''
 
@@ -784,11 +783,9 @@ default : configure the default run page when no schedules active
         elif cmd == 'time':
             ld.setclock()
 
-        elif cmd == 'B+':
-            ld.send("<BA>")
-
-        elif cmd == 'B-':
-            ld.send("<BD>")
+        elif cmd == 'bright':
+            brightness = input('Brightness (A..D): ')
+            ld.brightness(brightness)
 
         elif cmd == 'setid':
             newid = input('New ID (1..255): ')
