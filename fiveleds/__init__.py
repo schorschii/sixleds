@@ -858,6 +858,10 @@ Display Method Characters:
         elif cmd == 'current':
             ld.show()
 
+        elif cmd == 'default':
+            page = input('Default Run Page (A..Z): ')
+            ld.send('<RP'+page+'>')
+
         elif cmd == 'delete':
             ld.send('<D*>')
 
