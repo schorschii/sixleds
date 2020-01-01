@@ -729,19 +729,21 @@ class fiveleds():
 
 
 def main():
-    # debug
-    #logging.getLogger().setLevel(logging.INFO)
-
     # A function with a simple text interface to modify the display configuration
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--conf", default="~/.fiveleds", type=str)
     parser.add_argument("--port", default="/dev/ttyUSB0", type=str)
     parser.add_argument("--id", default=0, type=int)
+    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
     print( "Using Serial Port: " + args.port )
     print( "Adressing ID: " + str(args.id) )
+
+    if(args.verbose):
+        print( "Verbose Mode" )
+        logging.getLogger().setLevel(logging.INFO)
 
     ld = fiveleds(dev=args.port, conf=args.conf, device=args.id)
 
