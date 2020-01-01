@@ -566,15 +566,15 @@ class fiveleds():
     def show(self):
         """Show the Configuration"""
         for linenum, line in  sorted(self.lines.items()):
-            logging.info('### LINE ' + linenum + ' ###')
+            print('### LINE ' + linenum + ' ###')
             for pagenum, page in line.items():
                 m = 'M ' if page.changed else '  '
-                logging.info(m + '(' + pagenum + ') ' + page.packet())
-        logging.info('### SCHEDULES ###')
+                print(m + '(' + pagenum + ') ' + page.packet())
+        print('### SCHEDULES ###')
         for schednum, sched in sorted(self.schedules.items()):
             a = 'A ' if sched.active else 'N '
             m = 'M ' if sched.changed else '  '
-            logging.info( m + a + '(' + schednum + ') ' + sched.packet())
+            print( m + a + '(' + schednum + ') ' + sched.packet())
 
     def pushchanges(self, reset=False):
         """ Push the changes to the display
@@ -715,6 +715,9 @@ class fiveleds():
         bool:
             true on success
         """
+        if(self.device == 0):
+            return True
+
         out = ''
         sleep(1)
         while self.ser.inWaiting() > 0:
@@ -826,6 +829,9 @@ Your pages can contain the following functional strings:
 
         elif cmd == 'time':
             ld.setclock()
+
+        elif cmd == 'current':
+            ld.show()
 
         elif cmd == 'bright':
             brightness = input('Brightness (A..D): ')
