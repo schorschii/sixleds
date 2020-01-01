@@ -880,6 +880,10 @@ Display Method Characters:
             waittime  = input('Waiting Time   (A..Z, default A): ')
             outfx     = input('Closing Effect (A..K, default E): ')
             message   = input('Message: ')
+            if(infx == ''): infx = 'E'
+            if(displayfx == ''): displayfx = 'Q'
+            if(waittime == ''): waittime = 'A'
+            if(outfx == ''): outfx = 'E'
             ld.updateline(page, message, '1', infx, displayfx, waittime, outfx)
 
         elif cmd == 'sched':
