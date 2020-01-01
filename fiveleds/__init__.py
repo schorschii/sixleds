@@ -103,8 +103,6 @@ class oschedule():
                 MM = 59
             return dt(yy,mm,dd,HH,MM)
 
-
-
     def start(self, st):
         """Set the start datetime when the scedule will be active
 
@@ -160,8 +158,6 @@ class oschedule():
         if self.active != active:
             self.active = active
             self.modified()
-
-
 
     def modified(self, changed=True):
         """Check if modified, or set to modified (changed)
@@ -354,13 +350,7 @@ class opage():
     def message(self, MM=''):
         """The Message to Display
 
-        The string can have markup modifiers
-        '<AA>' = Normal size, '<AB>' = Bold size
-        '<CB>' = Text Red,'<CE>' = Text Green, '<CH>' = Text Orange
-        '<CL>' = Invert Red,'<CM>' = Invert Green, '<CN>' = Invert Orange
-        '<CR>' = R/O/G. '<CS>' = RANDOM
-        '<KD>' = Date DD/MM/YY, '<DK>' = Time HH:MM
-        '<UXX>' = European Character XX denotes the character 0x00 to 0x7F
+        The string can have markup modifiers (magic strings), see help text
 
         Parameters
         ------
@@ -520,7 +510,7 @@ class fiveleds():
             cs ^= ord(c)
         return format(cs, 'x').zfill(2).upper()
 
-    def updateline(self, page, message, line='1'):
+    def updateline(self, page, message, line='1', FX='E', MX='Q', WX='A', FY='E'):
         '''Update the page and message on a line or create one
 
         If the page does not exist it will create one with default settings
@@ -535,9 +525,16 @@ class fiveleds():
             the line the page will be assigned to.
         '''
         if page in self.lines[line]:
-            self.lines[line][page].message(message)
+            o = self.lines[line][page]
+            o.message(message)
+            o.leadin(FX)
+            o.display(MX)
+            o.wait(WX)
+            o.lagging(FY)
         else:
-            self.lines[line].update({page:opage(message)})
+            self.lines[line].update({
+                page: opage(message, FX, MX, WX, FY)
+            })
 
 
     def updatesched(self, sched, pages='', active=True):
@@ -774,34 +771,23 @@ Magic Strings
 -------------
 Your pages can contain the following functional strings:
 
-<AA> : 5x7 (normal size)
-<AB> : 6x7 (bold size)
-<AC> : 4x7 (narrow size)
+<AA> : 5x7  (normal size)
+<AB> : 6x7  (bold size)
+<AC> : 4x7  (narrow size)
 <AD> : 7x13 (large size)
-<AE> : 5x8 (long size)
+<AE> : 5x8  (long size)
 
 <BA> : Bell 0.5 sec
 ...
 <BZ> : Bell 13 sec
 
-<CA> : Dim Red
-<CB> : Red
-<CC> : Bright Red
-<CD> : Dim Green
-<CE> : Green
-<CF> : Bright Green
-<CG> : Dim Orange
-<CH> : Orange
-<CI> : Bright Orange
-<CJ> : Yellow
-<CK> : Lime
-<CL> : Inversed Red
-<CM> : Inversed Green
-<CN> : Inversed Orange
-<CP> : Red on Dim Green
-<CQ> : Green on Dim Red
-<CR> : R/Y/G
-<CS> : Rainbow
+<CA> : Dim Red      <CB> : Red         <CC> : Bright Red
+<CD> : Dim Green    <CE> : Green       <CF> : Bright Green
+<CG> : Dim Orange   <CH> : Orange      <CI> : Bright Orange
+<CJ> : Yellow       <CK> : Lime
+<CL> : Inv. Red     <CM> : Inv. Green  <CN> : Inv. Orange
+<CP> : Red on Dim Green                <CQ> : Green on Dim Red
+<CR> : R/Y/G        <CS> : Rainbow
 
 <Gxn> : Insert Graphic
  -> x : A..P
@@ -811,6 +797,39 @@ Your pages can contain the following functional strings:
 <KT> : Insert Time
 
 <Uxx> : European Caracter (00..7F)
+
+Leading Effect Characters:
+ A : Immediate     B : Xopen        C : Curtain Up
+ D : Curtain Down  E : Scroll Left  F : Scroll Right
+ G : Vopen         H : Vclose       I : Scroll Up
+ J : Scroll Down   K : Hold         L : Snow
+ M : Twinkle       N : Block Move   P : Random
+ Q : Pen writing 'Hello World'
+ R : Pen Writing 'Welcome'
+ S : Pen Writing 'Amplus'
+
+Closing Effect Characters:
+ A : Immediate     B : Xopen        C : Curtain Up
+ D : Curtain Down  E : Scroll Left  F : Scroll Right
+ G : Vopen         H : Vclose       I : Scroll Up
+ J : Scroll Down   K : Hold
+
+Display Method Characters:
+ Speed Level 1:
+ A : Normal        B : Blinking
+ C : Song 1        D : Song 2       E : Song 3
+
+ Speed Level 2:
+ Q : Normal        R : Blinking
+ S : Song 1        T : Song 2       U : Song 3
+
+ Speed Level 3:
+ a : Normal        b : Blinking
+ c : Song 1        d : Song 2       e : Song 3
+
+ Speed Level 4:
+ q : Normal        r : Blinking
+ s : Song 1        t : Song 2       u : Song 3
 '''
 
 
@@ -843,8 +862,12 @@ Your pages can contain the following functional strings:
 
         elif cmd == 'page':
             page = input('Page (A..Z): ')
+            infx = input('Leading Effect (A..S, default E): ')
+            displayfx = input('Display Effect (A..E, Q..U, a..e, q..u, default Q): ')
+            waittime = input('Waiting Time (A..Z, default A): ')
+            outfx = input('Closing Effect (A..K, default E): ')
             message = input('Message: ')
-            ld.updateline(page, message)
+            ld.updateline(page, message, '1', infx, displayfx, waittime, outfx)
 
         elif cmd == 'sched':
             sched = input('Schedule (A..E): ')
