@@ -95,16 +95,16 @@ class oschedule():
                 dd = 31
             if dd < 1:
                 dd = 1
-            HH = int(date[0:2] if date[6:8] != '' else '0')
+            HH = int(date[6:8] if date[6:8] != '' else '0')
             if HH > 23:
                 HH = 23
-            MM = int(date[0:2] if date[8:10] != '' else '0')
+            MM = int(date[8:10] if date[8:10] != '' else '0')
             if MM > 59:
                 MM = 59
             return dt(yy,mm,dd,HH,MM)
 
     def start(self, st):
-        """Set the start datetime when the scedule will be active
+        """Set the start datetime when the schedule will be active
 
         Parameters
         ------
@@ -115,7 +115,7 @@ class oschedule():
         self.modified()
 
     def end(self, en):
-        """Set the start datetime when the scedule will be active
+        """Set the start datetime when the schedule will be active
 
         Parameters
         ------
@@ -127,7 +127,6 @@ class oschedule():
 
     def pages(self, PP=''):
         """will substitute the pages shown in the schedule for the ones in the list
-
 
         Paramaters
         ------
@@ -442,7 +441,7 @@ class fiveleds():
             )
         except SerialException as e:
             self.error ="Failed to connect to Display on {0}: Serial Error{1}: {2}".format(dev, e.errno, e.strerror)
-            logger.warning(self.error)
+            logging.warning(self.error)
             self.ser = None
 
         if self.connected():
@@ -466,11 +465,11 @@ class fiveleds():
             with open(self.config, "wb") as f:
                 pickle.dump((self.lines,self.schedules,self.defaultPage), f)
         except IOError as e:
-            logger.warning("Failed to save config: I/O error({0}): {1}".format(e.errno, e.strerror))
+            logging.warning("Failed to save config: I/O error({0}): {1}".format(e.errno, e.strerror))
 
     def confget(self):
         '''Retrieve the config from the disk'''
-        print( "Using Config File: " + self.config )
+        logging.info( "Using Config File: " + self.config )
         if os.path.isfile(self.config):
             try:
                 with open(self.config, "rb") as f:
@@ -537,7 +536,7 @@ class fiveleds():
             })
 
 
-    def updatesched(self, sched, pages='', active=True):
+    def updatesched(self, sched, pages='', active=True, start='', end=''):
         '''Update the schedule or create one
 
         If the page does not exist it will create one with default settings
@@ -554,11 +553,16 @@ class fiveleds():
 
         if sched not in self.schedules and pages != '' and active != False:
             # create the schedule
-            self.schedules.update({sched:oschedule(pages)})
+            self.schedules.update({
+                sched: oschedule(pages, start, end)
+            })
         else:
             self.schedules[sched].activate(active)
             if pages != '':
-                self.schedules[sched].pages(pages)
+                o = self.schedules[sched]
+                o.pages(pages)
+                o.start(start)
+                o.end(end)
 
     def show(self):
         """Show the Configuration"""
@@ -745,11 +749,12 @@ def main():
         print( "Verbose Mode" )
         logging.getLogger().setLevel(logging.INFO)
 
+    print( "Welcome to interactive shell. Type 'help' for more information." )
+
     ld = fiveleds(dev=args.port, conf=args.conf, device=args.id)
 
 
-    help = '''An interface to the display Configuration:
-
+    help = '''
 Commands
 --------
   setid : set device ID
@@ -861,12 +866,12 @@ Display Method Characters:
             ld.setid(newid=newid)
 
         elif cmd == 'page':
-            page = input('Page (A..Z): ')
-            infx = input('Leading Effect (A..S, default E): ')
+            page      = input('Page (A..Z): ')
+            infx      = input('Leading Effect (A..S, default E): ')
             displayfx = input('Display Effect (A..E, Q..U, a..e, q..u, default Q): ')
-            waittime = input('Waiting Time (A..Z, default A): ')
-            outfx = input('Closing Effect (A..K, default E): ')
-            message = input('Message: ')
+            waittime  = input('Waiting Time   (A..Z, default A): ')
+            outfx     = input('Closing Effect (A..K, default E): ')
+            message   = input('Message: ')
             ld.updateline(page, message, '1', infx, displayfx, waittime, outfx)
 
         elif cmd == 'sched':
@@ -875,7 +880,9 @@ Display Method Characters:
             if pages == '':
                 ld.updatesched(sched, active=False)
             else:
-                ld.updatesched(sched, pages)
+                start = input('Start Time (YYMMDDHHmm): ')
+                end   = input('End Time   (YYMMDDHHmm): ')
+                ld.updatesched(sched, pages, active=True, start=start, end=end)
 
         elif cmd == 'push':
             ld.pushchanges()
