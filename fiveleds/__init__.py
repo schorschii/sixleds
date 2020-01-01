@@ -761,6 +761,7 @@ Commands
  bright : change brightness
 default : configure the default run page when no schedules active
    time : set the RTC
+ delete : delete all contents from device
 
    page : edit or create a page
   sched : edit or create a schedule
@@ -856,6 +857,9 @@ Display Method Characters:
 
         elif cmd == 'current':
             ld.show()
+
+        elif cmd == 'delete':
+            ld.send('<D*>')
 
         elif cmd == 'bright':
             brightness = input('Brightness (A..D): ')
