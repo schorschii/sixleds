@@ -733,30 +733,27 @@ class fiveleds():
 
 
 def main():
-    # A function with a simple text interface to modify the display configuration
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--conf", default="~/.fiveleds", type=str)
-    parser.add_argument("--port", default="/dev/ttyUSB0", type=str)
-    parser.add_argument("--id", default=0, type=int)
-    parser.add_argument("--verbose", action="store_true")
-    args = parser.parse_args()
+    helpCommandLine = '''
+Command Line Parameters
+-----------------------
+Configuration Parameters (for use with command line and interactive shell):
+ --conf <PATH> : config file path
+ --port <PATH> : serial port (default /dev/ttyUSB0)
+ --id   <INT>  : device id to address
+ --verbose     : enable debig output
 
-    print( "Using Serial Port: " + args.port )
-    print( "Adressing ID: " + str(args.id) )
+Operational Paramaters (disables the interactive shell):
+ --help               : display this help text
+ --set-page <PAGE>    : change content of page where <PAGE> is A..Z, needs --content parameter
+ --content <CONTENT>  : payload to set
+'''
 
-    if(args.verbose):
-        print( "Verbose Mode" )
-        logging.getLogger().setLevel(logging.INFO)
+    helpInteractiveShell = '''
+You also can use command line parameters instead of the interactive shell.
+Please start with --help for more information.
 
-    print( "Welcome to interactive shell. Type 'help' for more information." )
-
-    ld = fiveleds(dev=args.port, conf=args.conf, device=args.id)
-
-
-    help = '''
-Commands
---------
+Interactive Shell Commands
+--------------------------
   setid : set device ID
  bright : change brightness
 default : configure the default run page when no schedules active
@@ -772,7 +769,9 @@ current : show current config
 
    help : display this
    exit : as it says
+'''
 
+    helpMagicStrings = '''
 Magic Strings
 -------------
 Your pages can contain the following functional strings:
@@ -814,7 +813,7 @@ Leading Effect Characters:
  R : Pen Writing 'Welcome'
  S : Pen Writing 'Amplus'
 
-Closing Effect Characters:
+Lagging Effect Characters:
  A : Immediate     B : Xopen        C : Curtain Up
  D : Curtain Down  E : Scroll Left  F : Scroll Right
  G : Vopen         H : Vclose       I : Scroll Up
@@ -838,9 +837,43 @@ Display Method Characters:
  s : Song 1        t : Song 2       u : Song 3
 '''
 
+    # A function with a simple text interface to modify the display configuration
+    import argparse
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--conf", default="~/.fiveleds", type=str)
+    parser.add_argument("--port", default="/dev/ttyUSB0", type=str)
+    parser.add_argument("--id", default=0, type=int)
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--help", action="store_true")
+    parser.add_argument("--set-page", default="", type=str)
+    parser.add_argument("--leading-fx", default="E", type=str)
+    parser.add_argument("--lagging-fx", default="E", type=str)
+    parser.add_argument("--display-fx", default="Q", type=str)
+    parser.add_argument("--wait-time", default="A", type=str)
+    parser.add_argument("--content", default="", type=str)
+    args = parser.parse_args()
+
+    print( "Using Serial Port: " + args.port )
+    print( "Adressing ID: " + str(args.id) )
+
+    ld = fiveleds(dev=args.port, conf=args.conf, device=args.id)
+
+    if(args.verbose):
+        print( "Verbose Mode" )
+        logging.getLogger().setLevel(logging.INFO)
+
+    if(args.help):
+        print(helpCommandLine)
+        print(helpMagicStrings)
+        exit(0)
+    elif(args.set_page != "" and args.content != ""):
+        ld.updateline(args.set_page, args.content, '1', args.leading_fx, args.display_fx, args.wait_time, args.lagging_fx)
+        ld.pushchanges()
+        exit(0)
+    else:
+        print( "Welcome to interactive shell. Type 'help' for more information." )
 
     cmd=1
-    logging.info(help)
     while 1 and ld.isopen() :
         # get keyboard input
         cmd = input(">> ")
@@ -850,7 +883,8 @@ Display Method Characters:
             exit()
 
         elif cmd == 'help':
-            print(help)
+            print(helpInteractiveShell)
+            print(helpMagicStrings)
 
         elif cmd == 'time':
             ld.setclock()
@@ -878,7 +912,7 @@ Display Method Characters:
             infx      = input('Leading Effect (A..S, default E): ')
             displayfx = input('Display Effect (A..E, Q..U, a..e, q..u, default Q): ')
             waittime  = input('Waiting Time   (A..Z, default A): ')
-            outfx     = input('Closing Effect (A..K, default E): ')
+            outfx     = input('Lagging Effect (A..K, default E): ')
             message   = input('Message: ')
             if(infx == ''): infx = 'E'
             if(displayfx == ''): displayfx = 'Q'
