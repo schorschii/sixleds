@@ -439,7 +439,7 @@ class fiveleds():
                 stopbits=serial.STOPBITS_ONE,
                 bytesize=serial.EIGHTBITS
             )
-        except SerialException as e:
+        except serial.SerialException as e:
             self.error ="Failed to connect to Display on {0}: Serial Error{1}: {2}".format(dev, e.errno, e.strerror)
             logging.warning(self.error)
             self.ser = None
@@ -485,6 +485,8 @@ class fiveleds():
         bool:
             whether the serial interface is open
         '''
+        if(self.ser is None):
+            return False
         return self.ser.isOpen()
 
     def close(self):
@@ -740,12 +742,17 @@ Configuration Parameters (for use with command line and interactive shell):
  --conf <PATH> : config file path
  --port <PATH> : serial port (default /dev/ttyUSB0)
  --id   <INT>  : device id to address
- --verbose     : enable debig output
+ --verbose     : enable debug output
 
 Operational Paramaters (disables the interactive shell):
  --help               : display this help text
- --set-page <PAGE>    : change content of page where <PAGE> is A..Z, needs --content parameter
- --content <CONTENT>  : payload to set
+
+ --set-page <PAGE>    : change content of page where <PAGE> is A..Z, requires --content parameter
+ --content <CONTENT>  : payload to set to the page
+ --leading-fx         : leading effect to set to the page
+ --lagging-fx         : lagging effect to set to the page
+ --display-fx         : display effect to set to the page
+ --wait-time          : wait time to set to the page
 '''
 
     helpInteractiveShell = '''
@@ -856,11 +863,15 @@ Display Method Characters:
     print( "Using Serial Port: " + args.port )
     print( "Adressing ID: " + str(args.id) )
 
-    ld = fiveleds(dev=args.port, conf=args.conf, device=args.id)
-
     if(args.verbose):
         print( "Verbose Mode" )
         logging.getLogger().setLevel(logging.INFO)
+
+    ld = fiveleds(dev=args.port, conf=args.conf, device=args.id)
+
+    if(not ld.isopen()):
+        print("Error: Could not open serial port! Exit.")
+        exit(1)
 
     if(args.help):
         print(helpCommandLine)
@@ -874,7 +885,7 @@ Display Method Characters:
         print( "Welcome to interactive shell. Type 'help' for more information." )
 
     cmd=1
-    while 1 and ld.isopen() :
+    while 1:
         # get keyboard input
         cmd = input(">> ")
         logging.info(cmd)
