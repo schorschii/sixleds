@@ -1,0 +1,277 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import fiveleds
+
+
+def main():
+    version = '0.2.0'
+    helpCommandLine = '''
+Command Line Parameters
+-----------------------
+Configuration Parameters (for use with command line and interactive shell):
+ --conf <PATH> : config file path
+ --port <PATH> : serial port (default /dev/ttyUSB0)
+ --id   <INT>  : device id to address
+ --verbose     : enable debug output
+
+Operational Paramaters (disables the interactive shell):
+ --version       : display the version
+ --help          : display this help text
+ --print-config  : print the current config
+
+ --set-brightness <VALUE> : change brightness (A..D)
+ --set-default <VALUE>    : configure the default run page when no schedules active (A..Z)
+ --set-time               : write time to device RTC
+ --delete-all             : delete all contents on the device
+ --send                   : send raw command to device
+
+ --set-page <PAGE>      : change content of page where <PAGE> is A..Z, requires --content parameter
+ --content <CONTENT>    : payload to set to the page
+ [--leading-fx <VALUE>] : leading effect to set to the page, <VALUE> should be A..S
+ [--lagging-fx <VALUE>] : lagging effect to set to the page, <VALUE> should be A..K
+ [--display-fx <VALUE>] : display effect to set to the page, <VALUE> should be A..E, Q..U, a..e, q..u
+ [--wait-time  <VALUE>] : wait time to set to the page, <VALUE> should be A..Z
+
+ --set-schedule <SCHEDULE> : set schedule - <SCHEDULE> is the schedule slot to modify (A..E)
+ --schedule-pages <PAGES>  : set the page display order for this schedule (e.g. ABEFC)
+                             schedule will be deleted if empty
+ --start <YYMMDDHHmm>      : schedule start time
+ --end <YYMMDDHHmm>        : schedule end time
+'''
+
+    helpInteractiveShell = '''
+You also can use command line parameters instead of the interactive shell.
+Please start with --help for more information.
+
+Interactive Shell Commands
+--------------------------
+  setid : set device ID
+ bright : change brightness
+default : configure the default run page when no schedules active
+   time : write time to device RTC
+ delete : delete all contents from device
+
+   page : edit or create a page
+  sched : edit or create a schedule
+current : show current config
+   push : push changes to display
+
+      * : will push a typed packet to the display
+
+   help : display this
+   exit : as it says
+'''
+
+    helpMagicStrings = '''
+Magic Strings
+-------------
+Your pages can contain the following functional strings:
+
+<AA> : 5x7  (normal size)
+<AB> : 6x7  (bold size)
+<AC> : 4x7  (narrow size)
+<AD> : 7x13 (large size)
+<AE> : 5x8  (long size)
+
+<BA> : Bell 0.5 sec
+...
+<BZ> : Bell 13 sec
+
+<CA> : Dim Red      <CB> : Red         <CC> : Bright Red
+<CD> : Dim Green    <CE> : Green       <CF> : Bright Green
+<CG> : Dim Orange   <CH> : Orange      <CI> : Bright Orange
+<CJ> : Yellow       <CK> : Lime
+<CL> : Inv. Red     <CM> : Inv. Green  <CN> : Inv. Orange
+<CP> : Red on Dim Green                <CQ> : Green on Dim Red
+<CR> : R/Y/G        <CS> : Rainbow
+
+<Gxn> : Insert Graphic
+ -> x : A..P
+ -> n : 1..8
+
+<KD> : Insert Date
+<KT> : Insert Time
+
+<Uxx> : European Caracter (00..7F)
+
+Leading Effect Characters:
+ A : Immediate     B : Xopen        C : Curtain Up
+ D : Curtain Down  E : Scroll Left  F : Scroll Right
+ G : Vopen         H : Vclose       I : Scroll Up
+ J : Scroll Down   K : Hold         L : Snow
+ M : Twinkle       N : Block Move   P : Random
+ Q : Pen writing 'Hello World'
+ R : Pen Writing 'Welcome'
+ S : Pen Writing 'Amplus'
+
+Lagging Effect Characters:
+ A : Immediate     B : Xopen        C : Curtain Up
+ D : Curtain Down  E : Scroll Left  F : Scroll Right
+ G : Vopen         H : Vclose       I : Scroll Up
+ J : Scroll Down   K : Hold
+
+Display Method Characters:
+ Speed Level 1:
+ A : Normal        B : Blinking
+ C : Song 1        D : Song 2       E : Song 3
+
+ Speed Level 2:
+ Q : Normal        R : Blinking
+ S : Song 1        T : Song 2       U : Song 3
+
+ Speed Level 3:
+ a : Normal        b : Blinking
+ c : Song 1        d : Song 2       e : Song 3
+
+ Speed Level 4:
+ q : Normal        r : Blinking
+ s : Song 1        t : Song 2       u : Song 3
+'''
+
+    # A function with a simple text interface to modify the display configuration
+    import argparse
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--conf", default="~/.fiveleds", type=str)
+    parser.add_argument("--port", default="/dev/ttyUSB0", type=str)
+    parser.add_argument("--id", default=0, type=int)
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--version", action="store_true")
+    parser.add_argument("--help", action="store_true")
+    parser.add_argument("--print-config", action="store_true")
+    parser.add_argument("--set-brightness", default="", type=str)
+    parser.add_argument("--set-default", default="", type=str)
+    parser.add_argument("--set-time", action="store_true")
+    parser.add_argument("--delete-all", action="store_true")
+    parser.add_argument("--set-page", default="", type=str)
+    parser.add_argument("--leading-fx", default="E", type=str)
+    parser.add_argument("--lagging-fx", default="E", type=str)
+    parser.add_argument("--display-fx", default="Q", type=str)
+    parser.add_argument("--wait-time", default="A", type=str)
+    parser.add_argument("--set-schedule", default="", type=str)
+    parser.add_argument("--schedule-pages", default="", type=str)
+    parser.add_argument("--start", default="", type=str)
+    parser.add_argument("--end", default="", type=str)
+    parser.add_argument("--send", default="", type=str)
+    parser.add_argument("--content", default="", type=str)
+    args = parser.parse_args()
+
+    if(args.version):
+        print(version)
+        exit(0)
+
+    if(args.verbose):
+        print( "Verbose Mode" )
+        logging.getLogger().setLevel(logging.INFO)
+
+    print( "Using Serial Port: " + args.port )
+    print( "Adressing ID: " + str(args.id) )
+
+    ld = fiveleds.fiveleds(dev=args.port, conf=args.conf, device=args.id)
+
+    if(not ld.isopen()):
+        print("Error: Could not open serial port! Exit.")
+        exit(1)
+
+    if(args.help):
+        print(helpCommandLine)
+        print(helpMagicStrings)
+        exit(0)
+    elif(args.print_config):
+        ld.show()
+        exit(0)
+    elif(args.send != ""):
+        ld.send(args.send)
+        exit(0)
+    elif(args.set_brightness):
+        ld.brightness(args.set_brightness)
+        exit(0)
+    elif(args.set_default):
+        ld.send('<RP'+args.set_default+'>')
+        exit(0)
+    elif(args.set_time):
+        ld.setclock()
+        exit(0)
+    elif(args.delete_all):
+        ld.send('<D*>')
+        exit(0)
+    elif(args.set_page != "" and args.content != ""):
+        ld.updateline(args.set_page, args.content, '1', args.leading_fx, args.display_fx, args.wait_time, args.lagging_fx)
+        ld.pushchanges()
+        exit(0)
+    elif(args.set_schedule != ""):
+        if args.schedule_pages == '' or args.start == '' or args.end == '':
+            ld.updatesched(args.set_schedule, active=False)
+        else:
+            ld.updatesched(args.set_schedule, args.schedule_pages, active=True, start=args.start, end=args.end)
+        ld.pushchanges()
+        exit(0)
+    else:
+        print( "Welcome to interactive shell. Type 'help' for more information." )
+
+    cmd=1
+    while 1:
+        # get keyboard input
+        cmd = input(">> ")
+        logging.info(cmd)
+        if cmd == 'exit':
+            ld.close()
+            exit()
+
+        elif cmd == 'help':
+            print(helpInteractiveShell)
+            print(helpMagicStrings)
+
+        elif cmd == 'time':
+            ld.setclock()
+
+        elif cmd == 'current':
+            ld.show()
+
+        elif cmd == 'default':
+            page = input('Default Run Page (A..Z): ')
+            ld.send('<RP'+page+'>')
+
+        elif cmd == 'delete':
+            ld.send('<D*>')
+
+        elif cmd == 'bright':
+            brightness = input('Brightness (A..D): ')
+            ld.brightness(brightness)
+
+        elif cmd == 'setid':
+            newid = input('New ID (1..255): ')
+            ld.setid(newid=newid)
+
+        elif cmd == 'page':
+            page      = input('Page (A..Z): ')
+            infx      = input('Leading Effect (A..S, default E): ')
+            displayfx = input('Display Effect (A..E, Q..U, a..e, q..u, default Q): ')
+            waittime  = input('Waiting Time   (A..Z, default A): ')
+            outfx     = input('Lagging Effect (A..K, default E): ')
+            message   = input('Message: ')
+            if(infx == ''): infx = 'E'
+            if(displayfx == ''): displayfx = 'Q'
+            if(waittime == ''): waittime = 'A'
+            if(outfx == ''): outfx = 'E'
+            ld.updateline(page, message, '1', infx, displayfx, waittime, outfx)
+
+        elif cmd == 'sched':
+            sched = input('Schedule (A..E): ')
+            pages = input('Pages (none will dectivate): ')
+            if pages == '':
+                ld.updatesched(sched, active=False)
+            else:
+                start = input('Start Time (YYMMDDHHmm): ')
+                end   = input('End Time   (YYMMDDHHmm): ')
+                ld.updatesched(sched, pages, active=True, start=start, end=end)
+
+        elif cmd == 'push':
+            ld.pushchanges()
+
+        else:
+            ld.send(cmd)
+
+
+if __name__ == "__main__":
+    main()
