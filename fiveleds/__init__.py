@@ -10,24 +10,24 @@ import paho.mqtt.client as mqtt
 
 class dt(datetime):
     ''' Datetime Subclass
-    A datetime object with a special output for the display scedule
-    k'''
-    
+    A datetime object with a special output for the display schedule
+    '''
+
     def sched(self):
-        """Output the date in the format for the display .
+        """Output the date in the format for the display.
 
         Returns
         ------
         string
             Datetime in format 'yymmddHHMM'
-            yy=Year, mm=Month, dd=Day, HH=Hour, MM=Minute 
+            yy=Year, mm=Month, dd=Day, HH=Hour, MM=Minute
         """
         return self.strftime("%y%m%d%H%M")
 
 
 class oschedule():
     """An object to hold and modify a schedule definition
-    
+
     It holds a start date aend date a list of pages to show
     in order and active flag to indicate whether it is active
     on the display
@@ -51,7 +51,7 @@ class oschedule():
             passed to date function
         end:
             passd to the date function
-        
+
         Return
         ------
         :obj: `oschedule`
@@ -71,9 +71,9 @@ class oschedule():
             will accept a datetime object and output dt object
         date : string
             Datetime in format 'yymmddHHMM'
-            yy=Year, mm=Month, dd=Day, HH=Hour, MM=Minute 
+            yy=Year, mm=Month, dd=Day, HH=Hour, MM=Minute
             missing = 00, our of range rounded to nearest
-        
+
         Return
         ------
         dt
@@ -95,18 +95,16 @@ class oschedule():
                 dd = 31
             if dd < 1:
                 dd = 1
-            HH = int(date[0:2] if date[6:8] != '' else '0')
+            HH = int(date[6:8] if date[6:8] != '' else '0')
             if HH > 23:
                 HH = 23
-            MM = int(date[0:2] if date[8:10] != '' else '0')
+            MM = int(date[8:10] if date[8:10] != '' else '0')
             if MM > 59:
                 MM = 59
             return dt(yy,mm,dd,HH,MM)
-        
-
 
     def start(self, st):
-        """Set the start datetime when the scedule will be active
+        """Set the start datetime when the schedule will be active
 
         Parameters
         ------
@@ -117,7 +115,7 @@ class oschedule():
         self.modified()
 
     def end(self, en):
-        """Set the start datetime when the scedule will be active
+        """Set the start datetime when the schedule will be active
 
         Parameters
         ------
@@ -129,13 +127,12 @@ class oschedule():
 
     def pages(self, PP=''):
         """will substitute the pages shown in the schedule for the ones in the list
-    
-        
+
         Paramaters
         ------
         PP: string
             A string of Pages. eg "ABC"
-        
+
         Return
         ------
         string
@@ -161,26 +158,24 @@ class oschedule():
             self.active = active
             self.modified()
 
-
-
     def modified(self, changed=True):
         """Check if modified, or set to modified (changed)
 
         Send the function a True to set the schedule to modified or just call the
-        function with no parameters to reset it will return whether it was modied or not. 
+        function with no parameters to reset it will return whether it was modied or not.
 
         Parameters
         ------
         changed: bool, default=True
             Will set the self.changed value to this
-        
+
         Return
         ------
         bool:
             the value of changed on call on fucntion.
-        """ 
+        """
         r = self.changed
-        self.changed = changed   
+        self.changed = changed
         return r
 
     def packet(self):
@@ -198,7 +193,7 @@ class oschedule():
 
 class opage():
     """A page for a line which can be displayed
-    
+
     """
     MM = ''
     FX = ''
@@ -246,11 +241,11 @@ class opage():
         ord('ô'): '<U74>', ord('õ'): '<U75>', ord('ö'): '<U76>', ord('…'): '<U77>',
         ord('ø'): '<U78>', ord('ù'): '<U79>', ord('ú'): '<U7A>', ord('û'): '<U7B>',
         ord('ü'): '<U7C>', ord('ý'): '<U7D>', ord('þ'): '<U7E>', ord('ÿ'): '<U7F>',
-    }    
-    
+    }
+
     def __init__(self, MM, FX='E', MX='Q', WX='A', FY='E'):
         """Create a page for a line
-        
+
         This will hold a configuration,
 
         Parameters
@@ -265,27 +260,27 @@ class opage():
             The wait time (see wait)
         FY: string, defailt='E'
             The Lagging animation (see lagging)
-        
+
         Return
         ------
         :obj: `opage`
         """
-        self.leadin(FX) 
+        self.leadin(FX)
         self.display(MX)
         self.wait(WX)
         self.lagging(FY)
         self.message(MM)
-        self.modified()        
-        
+        self.modified()
+
 
     def leadin(self, FX=''):
         """Set the leadin animation for the page
-        
+
         Parameters
         ------
         FX: character
-            One of'ABCDEFGHIJKLMNOPQRS' 
-        
+            One of'ABCDEFGHIJKLMNOPQRS'
+
         Return
         ------
         character
@@ -303,7 +298,7 @@ class opage():
         ------
         MX: character
             One of 'ABRSabqr'
-            
+
         Return
         ------
         character
@@ -316,13 +311,13 @@ class opage():
 
     def wait(self, WX=''):
         """Set the Wait time between leadin and lagging animations for the page
-        
+
         Parameters
         ------
         WX: character
-            One of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 
+            One of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
             Letter denotes 0.5, 1, 2, 3 .. 25 Seconds
-        
+
         Return
         ------
         character
@@ -335,12 +330,12 @@ class opage():
 
     def lagging(self, FY=''):
         """Set the lagging animation for the page
-        
+
         Parameters
         ------
         FY: character
-            One of'ABCDEFGHIJK' 
-        
+            One of'ABCDEFGHIJK'
+
         Return
         ------
         character
@@ -354,13 +349,7 @@ class opage():
     def message(self, MM=''):
         """The Message to Display
 
-        The string can have markup modifiers
-        '<AA>' = Normal size, '<AB>' = Bold size
-        '<CB>' = Text Red,'<CE>' = Text Green, '<CH>' = Text Orange
-        '<CL>' = Invert Red,'<CM>' = Invert Green, '<CN>' = Invert Orange
-        '<CR>' = R/O/G. '<CS>' = RANDOM
-        '<KD>' = Date DD/MM/YY, '<DK>' = Time HH:MM
-        '<UXX>' = European Character XX denotes the character 0x00 to 0x7F
+        The string can have markup modifiers (magic strings), see help text
 
         Parameters
         ------
@@ -381,12 +370,12 @@ class opage():
         """Check if modified, or set to modified (changed)
 
         Send the function a True to set the page to modified, or just call the
-        function with no parameters to reset and return whether it was modied or not. 
+        function with no parameters to reset and return whether it was modied or not.
 
         Parameters
         ------
         changed: bool, default=False
-            Will set the modified 
+            Will set the modified
 
         Return
         ------
@@ -394,7 +383,7 @@ class opage():
             the value of changed on call on fucntion.
         """
         r = self.changed
-        self.changed = changed   
+        self.changed = changed
         return r
 
     def packet(self):
@@ -412,7 +401,7 @@ class opage():
 
 class fiveleds():
     """A Class to store the lcd setting for the display in the space."""
-    
+
     lines = {'1':{}}
     schedules = {}
     defaultPage = 'A'
@@ -420,7 +409,7 @@ class fiveleds():
 
     def __init__(self, dev='/dev/ttyUSB0', conf='/var/lib/fiveleds/config', device=0x01):
         ''' Create the connection to the display
-        
+
         Set up serial connections.
         reload the config saved
 
@@ -434,7 +423,7 @@ class fiveleds():
             to whatever you enter here.
             NOTE! unsire the directory exists and is +wr by service user and group.
         device: byte, default=0x01
-            The device identifier 
+            The device identifier
 
         Return
         ------
@@ -450,9 +439,9 @@ class fiveleds():
                 stopbits=serial.STOPBITS_ONE,
                 bytesize=serial.EIGHTBITS
             )
-        except SerialException as e:
-            self.error ="Failed to connect to Display on {0}: Serial Error{1}: {2}".format(dev, e.errno, e.strerror) 
-            logger.warning(self.error)
+        except serial.SerialException as e:
+            self.error ="Failed to connect to Display on {0}: Serial Error{1}: {2}".format(dev, e.errno, e.strerror)
+            logging.warning(self.error)
             self.ser = None
 
         if self.connected():
@@ -463,23 +452,24 @@ class fiveleds():
         '''Is the display connected
         Return
         ------
-        :bool: 
+        :bool:
             True Connected to display | False Not connected '''
         return True if isinstance(self.ser, serial.Serial) else False
 
     def confput(self):
         '''Save the current config to disk'''
-        if  os.path.isfile(self.config):
+        if os.path.isfile(self.config):
             # Clear file
             os.remove(self.config)
         try:
             with open(self.config, "wb") as f:
                 pickle.dump((self.lines,self.schedules,self.defaultPage), f)
         except IOError as e:
-            logger.warning("Failed to save config: I/O error({0}): {1}".format(e.errno, e.strerror))
-    
+            logging.warning("Failed to save config: I/O error({0}): {1}".format(e.errno, e.strerror))
+
     def confget(self):
         '''Retrieve the config from the disk'''
+        logging.info( "Using Config File: " + self.config )
         if os.path.isfile(self.config):
             try:
                 with open(self.config, "rb") as f:
@@ -489,18 +479,20 @@ class fiveleds():
 
     def isopen(self):
         '''Check if serial interface is open
-        
+
         Return
         ------
         bool:
             whether the serial interface is open
         '''
+        if(self.ser is None):
+            return False
         return self.ser.isOpen()
 
     def close(self):
         '''Close the serial interface'''
         return self.ser.close()
-    
+
     def chsum(self, packet):
         '''Returns a checksum for the packet contents
 
@@ -519,14 +511,14 @@ class fiveleds():
             cs ^= ord(c)
         return format(cs, 'x').zfill(2).upper()
 
-    def updateline(self, page, message, line='1'):
+    def updateline(self, page, message, line='1', FX='E', MX='Q', WX='A', FY='E'):
         '''Update the page and message on a line or create one
-        
+
         If the page does not exist it will create one with default settings
 
         Paramaters
         -------
-        page: string 
+        page: string
             The page identifier
         message: string
             A message to display when page activated, for markup see the opage.message function.
@@ -534,46 +526,58 @@ class fiveleds():
             the line the page will be assigned to.
         '''
         if page in self.lines[line]:
-            self.lines[line][page].message(message)
+            o = self.lines[line][page]
+            o.message(message)
+            o.leadin(FX)
+            o.display(MX)
+            o.wait(WX)
+            o.lagging(FY)
         else:
-            self.lines[line].update({page:opage(message)})
+            self.lines[line].update({
+                page: opage(message, FX, MX, WX, FY)
+            })
 
 
-    def updatesched(self, sched, pages='', active=True):
+    def updatesched(self, sched, pages='', active=True, start='', end=''):
         '''Update the schedule or create one
-        
+
         If the page does not exist it will create one with default settings
 
         Paramaters
         -------
-        sched: string 
+        sched: string
             The schedule identifier
         pages: string
             The pages to be displayed when schedule active.
         active: bool, default=True
             Whether the schedule will be active.
         '''
-               
+
         if sched not in self.schedules and pages != '' and active != False:
             # create the schedule
-            self.schedules.update({sched:oschedule(pages)})
+            self.schedules.update({
+                sched: oschedule(pages, start, end)
+            })
         else:
             self.schedules[sched].activate(active)
             if pages != '':
-                self.schedules[sched].pages(pages)
+                o = self.schedules[sched]
+                o.pages(pages)
+                o.start(start)
+                o.end(end)
 
     def show(self):
         """Show the Configuration"""
         for linenum, line in  sorted(self.lines.items()):
-            logging.info('### LINE ' + linenum + ' ###')
+            print('### LINE ' + linenum + ' ###')
             for pagenum, page in line.items():
                 m = 'M ' if page.changed else '  '
-                logging.info(m + '(' + pagenum + ') ' + page.packet())
-        logging.info('### SCHEDULES ###')
+                print(m + '(' + pagenum + ') ' + page.packet())
+        print('### SCHEDULES ###')
         for schednum, sched in sorted(self.schedules.items()):
             a = 'A ' if sched.active else 'N '
             m = 'M ' if sched.changed else '  '
-            logging.info( m + a + '(' + schednum + ') ' + sched.packet())
+            print( m + a + '(' + schednum + ') ' + sched.packet())
 
     def pushchanges(self, reset=False):
         """ Push the changes to the display
@@ -581,7 +585,7 @@ class fiveleds():
         Return
         ------
         bool
-            Frue on success, False on failue 
+            True on success, False on failue
         """
         changes = 0
         changed = 0
@@ -634,22 +638,20 @@ class fiveleds():
 
     def setclock(self):
         """Will set the RTC on the display to localtime
-        
+
         Return
         ------
         bool:
-            true on success 
+            true on success
         """
         if self.send(strftime("<SC>%y0%w%m%d%H%M%S", localtime())):
             logging.info("RTC set - OK")
         else:
             logging.info("RTC set - Failed")
 
-
-
     def brightness(self, bn='D'):
-        """Modify the brightness of the screen 
-        
+        """Modify the brightness of the screen
+
         Parameter
         ------
         bn: character, default='D'
@@ -657,23 +659,40 @@ class fiveleds():
         'B' = 75%
         'C' = 50%
         'D' = 25%
-        
 
         Return
         ------
         bool:
-            true on success 
+            true on success
         """
         if len(bn) == 1 and bn in 'ABCD':
             if self.send('<B' + bn + '>' ):
-                logging.info("RTC set - OK")
+                logging.info("Brightness set - OK")
             else:
-                logging.info("RTC set - Failed")
+                logging.info("Brightness set - Failed")
+        else:
+            print("Invalid brightness")
 
         return self.response()
- 
+
+    def setid(self, newid):
+        """Will set the ID on the display
+
+        Return
+        ------
+        bool:
+            true on success
+        """
+        data = "<ID><%02d><E>" % int(newid)
+        logging.info("Send: " + data)
+        self.ser.write(bytes(data, 'ASCII'))
+        if self.response(expected="%02d" % int(newid)):
+            logging.info("ID set - OK")
+        else:
+            logging.info("ID set - Failed")
+
     def send(self, packet):
-        """Send the packet to the display and return the respomse
+        """Send the packet to the display and return the response
 
         Parameters
         ------
@@ -685,102 +704,30 @@ class fiveleds():
         bool:
             from the self.response function
         """
-        self.ser.write(bytes('<ID%02x>' % self.device + packet + self.chsum(packet) + '<E>', 'ASCII'))
+        data = '<ID%02x>' % self.device + packet + self.chsum(packet) + '<E>'
+        logging.info('Send: ' + data)
+        self.ser.write(bytes(data, 'ASCII'))
+        return self.response()
 
-#       logging.info('<ID%02x>' % self.device + packet + self.chsum(packet) + '<E>')
-
-        return self.response() 
-
-    def response(self):
+    def response(self, expected='ACK'):
         """ Get the response from the display
-        
+        Note: There is no ACK response using Sign ID=00
+
         Return
         ------
         bool:
-            true on success 
+            true on success
         """
+        if(self.device == 0):
+            return True
+
         out = ''
         sleep(1)
         while self.ser.inWaiting() > 0:
             out += self.ser.read(1).decode('ASCII')
+        logging.info('Response: ' + out)
         if out != '':
-            logging.info('Response ' + out)
-            if out == 'ACK':
+            if out == expected:
                 return True
             else:
                 return False
-
-           
-
-def main():
-    """A function with a simple text interface to modify the display configuration
-    """
-    ld = fiveleds() 
-
-
-    help = '''An interface to the display Configuration:
-
-Commands
-------
-   help : Display this
-
-   page : edit or create a page
-  sched : Edit or create a schedule
-current : Show current config
-   push : Push changes to display
-
-     B+ : Full brightness
-     B- : Lowest brightness
-default : configure the default run page when no schedules active
-   time : Set the RTC
-
-      * : will push a typed packet to the display
-   
-   exit : As it says
-'''
-
-
-    cmd=1
-    logging.info(help)
-    while 1 and ld.isopen() :
-        # get keyboard input
-        cmd = input(">> ")
-        logging.info(cmd)
-        if cmd == 'exit':
-            ld.close()
-            exit()
-
-        elif cmd == 'help':
-            prtint(help)
-
-        elif cmd == 'time':
-            ld.setclock()
-
-        elif cmd == 'B+':
-            ld.send("<BA>")
-
-        elif cmd == 'B-':
-            ld.send("<BD>")
-
-        elif cmd == 'page':
-            page = input('Page (A..Z): ')
-            message = input('Message: ')
-            ld.updateline(page, message)
-
-        elif cmd == 'sched':
-            sched = input('Schedule (A..E): ')
-            pages = input('Pages (none will dectivate): ')
-            if pages == '':
-                ld.updatesched(sched, active=False)
-            else:
-                ld.updatesched(sched, pages)
-                
-        elif cmd == 'push':
-            ld.pushchanges()
-
-        else:
-            ld.send(cmd)
-
-
-if __name__ == "__main__":
-    main()
