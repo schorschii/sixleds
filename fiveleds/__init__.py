@@ -735,6 +735,7 @@ class fiveleds():
 
 
 def main():
+    version = '0.1'
     helpCommandLine = '''
 Command Line Parameters
 -----------------------
@@ -745,14 +746,28 @@ Configuration Parameters (for use with command line and interactive shell):
  --verbose     : enable debug output
 
 Operational Paramaters (disables the interactive shell):
- --help               : display this help text
+ --version       : display the version
+ --help          : display this help text
+ --print-config  : print the current config
 
- --set-page <PAGE>    : change content of page where <PAGE> is A..Z, requires --content parameter
- --content <CONTENT>  : payload to set to the page
- --leading-fx         : leading effect to set to the page
- --lagging-fx         : lagging effect to set to the page
- --display-fx         : display effect to set to the page
- --wait-time          : wait time to set to the page
+ --set-brightness <VALUE> : change brightness (A..D)
+ --set-default <VALUE>    : configure the default run page when no schedules active (A..Z)
+ --set-time               : write time to device RTC
+ --delete-all             : delete all contents on the device
+ --send                   : send raw command to device
+
+ --set-page <PAGE>      : change content of page where <PAGE> is A..Z, requires --content parameter
+ --content <CONTENT>    : payload to set to the page
+ [--leading-fx <VALUE>] : leading effect to set to the page, <VALUE> should be A..S
+ [--lagging-fx <VALUE>] : lagging effect to set to the page, <VALUE> should be A..K
+ [--display-fx <VALUE>] : display effect to set to the page, <VALUE> should be A..E, Q..U, a..e, q..u
+ [--wait-time  <VALUE>] : wait time to set to the page, <VALUE> should be A..Z
+
+ --set-schedule <SCHEDULE> : set schedule - <SCHEDULE> is the schedule slot to modify (A..E)
+ --schedule-pages <PAGES>  : set the page display order for this schedule (e.g. ABEFC)
+                             schedule will be deleted if empty
+ --start <YYMMDDHHmm>      : schedule start time
+ --end <YYMMDDHHmm>        : schedule end time
 '''
 
     helpInteractiveShell = '''
@@ -764,7 +779,7 @@ Interactive Shell Commands
   setid : set device ID
  bright : change brightness
 default : configure the default run page when no schedules active
-   time : set the RTC
+   time : write time to device RTC
  delete : delete all contents from device
 
    page : edit or create a page
@@ -851,21 +866,36 @@ Display Method Characters:
     parser.add_argument("--port", default="/dev/ttyUSB0", type=str)
     parser.add_argument("--id", default=0, type=int)
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--version", action="store_true")
     parser.add_argument("--help", action="store_true")
+    parser.add_argument("--print-config", action="store_true")
+    parser.add_argument("--set-brightness", default="", type=str)
+    parser.add_argument("--set-default", default="", type=str)
+    parser.add_argument("--set-time", action="store_true")
+    parser.add_argument("--delete-all", action="store_true")
     parser.add_argument("--set-page", default="", type=str)
     parser.add_argument("--leading-fx", default="E", type=str)
     parser.add_argument("--lagging-fx", default="E", type=str)
     parser.add_argument("--display-fx", default="Q", type=str)
     parser.add_argument("--wait-time", default="A", type=str)
+    parser.add_argument("--set-schedule", default="", type=str)
+    parser.add_argument("--schedule-pages", default="", type=str)
+    parser.add_argument("--start", default="", type=str)
+    parser.add_argument("--end", default="", type=str)
+    parser.add_argument("--send", default="", type=str)
     parser.add_argument("--content", default="", type=str)
     args = parser.parse_args()
 
-    print( "Using Serial Port: " + args.port )
-    print( "Adressing ID: " + str(args.id) )
+    if(args.version):
+        print(version)
+        exit(0)
 
     if(args.verbose):
         print( "Verbose Mode" )
         logging.getLogger().setLevel(logging.INFO)
+
+    print( "Using Serial Port: " + args.port )
+    print( "Adressing ID: " + str(args.id) )
 
     ld = fiveleds(dev=args.port, conf=args.conf, device=args.id)
 
@@ -877,8 +907,33 @@ Display Method Characters:
         print(helpCommandLine)
         print(helpMagicStrings)
         exit(0)
+    elif(args.print_config):
+        ld.show()
+        exit(0)
+    elif(args.send != ""):
+        ld.send(args.send)
+        exit(0)
+    elif(args.set_brightness):
+        ld.brightness(args.set_brightness)
+        exit(0)
+    elif(args.set_default):
+        ld.send('<RP'+args.set_default+'>')
+        exit(0)
+    elif(args.set_time):
+        ld.setclock()
+        exit(0)
+    elif(args.delete_all):
+        ld.send('<D*>')
+        exit(0)
     elif(args.set_page != "" and args.content != ""):
         ld.updateline(args.set_page, args.content, '1', args.leading_fx, args.display_fx, args.wait_time, args.lagging_fx)
+        ld.pushchanges()
+        exit(0)
+    elif(args.set_schedule != ""):
+        if args.schedule_pages == '' or args.start == '' or args.end == '':
+            ld.updatesched(args.set_schedule, active=False)
+        else:
+            ld.updatesched(args.set_schedule, args.schedule_pages, active=True, start=args.start, end=args.end)
         ld.pushchanges()
         exit(0)
     else:
