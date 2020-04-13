@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=fiveleds GUI
+Exec=fiveleds-gui
+Terminal=false
+Icon=format-text-direction-ltr-symbolic
+Categories=Application;Other
+Comment=LED Display Control Software

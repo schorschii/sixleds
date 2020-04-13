@@ -9,15 +9,16 @@ This library was made for providing Linux support for the following devices:
 - McCrypt LED Light Writing 590996 (the Conrad Laufschrift)
 
 ## Installation
+The installer expects that `python3` and `pip3` is installed on your system and will install the python package and a link for the GUI in your start menu.
 ```
 # download and go to package dir
 cd fiveleds
 
-# install system-wide
-sudo -H pip3 install .
+# open install.sh in terminal and enter your sudo password when prompted
+./install.sh
 
 # to uninstall use
-sudo -H pip3 uninstall fiveleds
+./install.sh --uninstall
 ```
 
 ## Functionality
@@ -31,7 +32,7 @@ After installing, you can use it in following ways to send messages to the LED D
 
 ### The GUI
 ```
-# open the GUI with this command
+# open the GUI from your start menu or with this command
 fiveleds-gui
 ```
 
