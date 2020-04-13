@@ -5,7 +5,6 @@ import os, sys, serial, logging
 from time import sleep, localtime, strftime
 from datetime import datetime
 import _pickle as pickle
-import paho.mqtt.client as mqtt
 
 
 class dt(datetime):
