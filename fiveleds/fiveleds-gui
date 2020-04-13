@@ -11,6 +11,8 @@ class ledgui(wx.Frame):
     PRODUCT_NAME = "fiveleds GUI"
     PRODUCT_VERSION = "0.2.0"
 
+    PAGES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+
     serialPort = "/dev/ttyUSB0"
     fiveledsConfigFile = "~/.fiveleds"
     deviceId = 0
@@ -254,22 +256,30 @@ class ledgui(wx.Frame):
     def OnSendMessage(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter a raw command to send")
-            dlg.ShowModal()
+            if(dlg.ShowModal() != wx.ID_OK):
+                return
             result = dlg.GetValue()
-            if(result != ""):
-                self.ld.send(result)
+            if(result == ""):
+                wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
+                return
+            self.ld.send(result)
 
     def OnSetDefaultRunPage(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter a default run page (A..Z)")
-            dlg.ShowModal()
+            if(dlg.ShowModal() != wx.ID_OK):
+                return
             result = dlg.GetValue()
+            if(result not in self.PAGES):
+                wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
+                return
             self.ld.send('<RP'+result+'>')
 
     def OnSetId(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter new ID (1..255)")
-            dlg.ShowModal()
+            if(dlg.ShowModal() != wx.ID_OK):
+                return
             result = dlg.GetValue()
             self.ld.setid(newid=int(result))
 
@@ -279,31 +289,41 @@ class ledgui(wx.Frame):
 
     def OnSetBrightness(self, e):
         if(self.SetupConnection()):
-            dlg = wx.TextEntryDialog(self, "Enter brightness level (A..D)")
-            dlg.ShowModal()
+            dlg = wx.TextEntryDialog(self, "Enter brightness level (A..D)", self.PRODUCT_NAME, "A")
+            if(dlg.ShowModal() != wx.ID_OK):
+                return
             result = dlg.GetValue()
-            if(result in ["A", "B", "C", "D"]):
-                self.ld.brightness(result)
+            if(result not in ["A", "B", "C", "D"]):
+                wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
+                return
+            self.ld.brightness(result)
 
     def OnSetSchedule(self, e):
         if(self.SetupConnection()):
-            dlg = wx.TextEntryDialog(self, "Enter which schedule should be edited (e.g. A..E)")
-            dlg.ShowModal()
+            dlg = wx.TextEntryDialog(self, "Enter which schedule should be edited (e.g. A..E)", self.PRODUCT_NAME, "A")
+            if(dlg.ShowModal() != wx.ID_OK):
+                return
             schedule = dlg.GetValue()
+            if(schedule not in ["A", "B", "C", "D", "E"]):
+                wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
+                return
 
             dlg = wx.TextEntryDialog(self, "Enter which pages should be shown (e.g. ABDEF). Leave empty to disable this schedule.")
-            dlg.ShowModal()
+            if(dlg.ShowModal() != wx.ID_OK):
+                return
             pages = dlg.GetValue()
 
             if(pages == ""):
                 self.ld.updatesched(schedule, active=False)
             else:
-                dlg = wx.TextEntryDialog(self, "Enter schedule start time (YYMMDDHHmm).")
-                dlg.ShowModal()
+                dlg = wx.TextEntryDialog(self, "Enter schedule start time (YYMMDDHHmm).", self.PRODUCT_NAME, "0001010000")
+                if(dlg.ShowModal() != wx.ID_OK):
+                    return
                 start = dlg.GetValue()
 
-                dlg = wx.TextEntryDialog(self, "Enter schedule end time (YYMMDDHHmm).")
-                dlg.ShowModal()
+                dlg = wx.TextEntryDialog(self, "Enter schedule end time (YYMMDDHHmm).", self.PRODUCT_NAME, "9912302359")
+                if(dlg.ShowModal() != wx.ID_OK):
+                    return
                 end = dlg.GetValue()
 
                 self.ld.updatesched(schedule, pages, active=True, start=start, end=end)
@@ -320,19 +340,25 @@ class ledgui(wx.Frame):
     def OnSetEditPage(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter page to edit (A..Z)")
-            dlg.ShowModal()
+            if(dlg.ShowModal() != wx.ID_OK):
+                return
             result = dlg.GetValue()
-            if(result != ""):
-                self.page = result
-                self.SetCustomTitle()
+            if(result not in self.PAGES):
+                wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
+                return
+            self.page = result
+            self.SetCustomTitle()
 
     def OnSetDisplayTime(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter display (wait) time (A..Z)")
-            dlg.ShowModal()
+            if(dlg.ShowModal() != wx.ID_OK):
+                return
             result = dlg.GetValue()
-            if(result != ""):
-                self.waitTime = result
+            if(result not in self.PAGES):
+                wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
+                return
+            self.waitTime = result
 
     def OnSetLeadingFx(self, fx, menuItem, e):
         self.btnLeadingFxImmediate.Check(False)
