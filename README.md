@@ -1,4 +1,5 @@
-# fiveleds - LED Display Control Library
+# fiveleds
+**LED Display Control Library, Command Line Utility and Graphical User Interface (GUI)**
 
 ## Compatibility
 This library was made for providing Linux support for the following devices:
@@ -14,13 +15,6 @@ cd fiveleds
 # install system-wide
 sudo -H pip3 install .
 
-# now you can execute the script
-# the help command will tell you how to use the command line utility
-fiveleds --help
-
-# calling the binary without parameters will open the interactive shell
-fiveleds
-
 # to uninstall use
 sudo -H pip3 uninstall fiveleds
 ```
@@ -32,12 +26,29 @@ sudo -H pip3 uninstall fiveleds
 - An on disk backup will be loaded at creation and stored after every change.
 
 ## Quickstart
-After installing, you can send messages to the LED Display by using:
+After installing, you can use it in following ways to send messages to the LED Display.
+
+### The GUI
 ```
-# Set text "Hello World" to page "A"
-# Please replace "/dev/ttyUSB0" with the serial port where the device is attached
+# open the GUI with this command
+fiveleds-gui
+```
+
+### Command Line
+```
+# the help command will tell you how to use it
+fiveleds --help
+
+# example: set text "Hello World" to page "A"
+# please replace "/dev/ttyUSB0" with the serial port where the device is attached
 fiveleds --port /dev/ttyUSB0 --set-page A --content "Hello World!"
 
-# Set page "A" as default run page
+# example: set page "A" as default run page
 fiveleds --port /dev/ttyUSB0 --set-default A
+```
+
+### Interactive Shell
+```
+# calling the command line utility without parameters will open the interactive shell
+fiveleds
 ```

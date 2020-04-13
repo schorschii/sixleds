@@ -41,7 +41,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
@@ -67,7 +67,7 @@ setup(
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
-    py_modules=["fiveleds"],
+    py_modules=['fiveleds'],
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
@@ -108,6 +108,7 @@ setup(
     #    ],
     #},
     scripts=[
-        'fiveleds/fiveleds'
+        'fiveleds/fiveleds',
+        'fiveleds/fiveleds-gui'
     ]
 )

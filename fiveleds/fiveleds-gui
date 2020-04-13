@@ -1,0 +1,435 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from functools import partial
+import fiveleds
+import wx
+import wx.adv
+
+
+class ledgui(wx.Frame):
+    PRODUCT_NAME = "fiveleds GUI"
+    PRODUCT_VERSION = "0.2.0"
+
+    serialPort = "/dev/ttyUSB0"
+    fiveledsConfigFile = "~/.fiveleds"
+    deviceId = 0
+
+    page = "A"
+    line = "1"
+    leadingFx = "E"
+    speed = 2
+    displayFx = "A"
+    displayMethod = "Q" # calculated from speed and displayFx
+    waitTime = "A"
+    laggingFx = "E"
+
+    def __init__(self, *args, **kwargs):
+        super(ledgui, self).__init__(*args, **kwargs)
+        self.InitUI()
+
+    def InitUI(self):
+        # Menubar
+        menubar = wx.MenuBar()
+        self.SetMenuBar(menubar)
+
+        # File Menu
+        fileMenu = wx.Menu()
+        menubar.Append(fileMenu, '&File')
+        self.Bind(wx.EVT_MENU, self.OnSelectSerialPort, fileMenu.Append(wx.ID_OPEN, '&Select Serial Port'))
+        fileMenu.AppendSeparator()
+        fileMenuSend = wx.MenuItem(fileMenu, wx.ID_ANY, '&Send Page\tCtrl+S')
+        fileMenuSend.SetBitmap(wx.ArtProvider.GetBitmap(wx.ART_TICK_MARK, wx.ART_MENU))
+        self.Bind(wx.EVT_MENU, self.OnSendPage, fileMenu.Append(fileMenuSend))
+        fileMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, self.OnQuit, fileMenu.Append(wx.ID_EXIT, 'Quit', 'Quit application'))
+
+        # Edit Menu
+        editMenu = wx.Menu()
+        menubar.Append(editMenu, '&Edit')
+        self.Bind(wx.EVT_MENU, self.OnSelectSerialPort, editMenu.Append(wx.ID_CUT, '&Cut'))
+        self.Bind(wx.EVT_MENU, self.OnSendPage, editMenu.Append(wx.ID_COPY, '&Copy'))
+        self.Bind(wx.EVT_MENU, self.OnQuit, editMenu.Append(wx.ID_PASTE, '&Paste'))
+        self.Bind(wx.EVT_MENU, self.OnQuit, editMenu.Append(wx.ID_DELETE, '&Delete'))
+
+        # Commands Leading Effect Menu
+        leadingEffectMenu = wx.Menu()
+        self.btnLeadingFxImmediate = leadingEffectMenu.Append(wx.ID_ANY, 'Immediate', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxXopen = leadingEffectMenu.Append(wx.ID_ANY, 'Xopen', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxCurtainUp = leadingEffectMenu.Append(wx.ID_ANY, 'Curtain Up', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxCurtainDown = leadingEffectMenu.Append(wx.ID_ANY, 'Curtain Down', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxScrollLeft = leadingEffectMenu.Append(wx.ID_ANY, 'Scroll Left', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxScrollRight = leadingEffectMenu.Append(wx.ID_ANY, 'Scroll Right', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxVopen = leadingEffectMenu.Append(wx.ID_ANY, 'Vopen', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxVclose = leadingEffectMenu.Append(wx.ID_ANY, 'Vclose', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxScrollUp = leadingEffectMenu.Append(wx.ID_ANY, 'Scroll Up', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxScrollDown = leadingEffectMenu.Append(wx.ID_ANY, 'Scroll Down', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxHold = leadingEffectMenu.Append(wx.ID_ANY, 'Hold', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxSnow = leadingEffectMenu.Append(wx.ID_ANY, 'Snow', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxTwinkle = leadingEffectMenu.Append(wx.ID_ANY, 'Twinkle', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxBlockMove = leadingEffectMenu.Append(wx.ID_ANY, 'Block Move', kind=wx.ITEM_CHECK)
+        self.btnLeadingFxRandom = leadingEffectMenu.Append(wx.ID_ANY, 'Random', kind=wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'A', self.btnLeadingFxImmediate), self.btnLeadingFxImmediate)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'B', self.btnLeadingFxXopen), self.btnLeadingFxXopen)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'C', self.btnLeadingFxCurtainUp), self.btnLeadingFxCurtainUp)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'D', self.btnLeadingFxCurtainDown), self.btnLeadingFxCurtainDown)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'E', self.btnLeadingFxScrollLeft), self.btnLeadingFxScrollLeft)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'F', self.btnLeadingFxScrollRight), self.btnLeadingFxScrollRight)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'G', self.btnLeadingFxVopen), self.btnLeadingFxVopen)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'H', self.btnLeadingFxVclose), self.btnLeadingFxVclose)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'I', self.btnLeadingFxScrollUp), self.btnLeadingFxScrollUp)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'J', self.btnLeadingFxScrollDown), self.btnLeadingFxScrollDown)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'K', self.btnLeadingFxHold), self.btnLeadingFxHold)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'L', self.btnLeadingFxSnow), self.btnLeadingFxSnow)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'M', self.btnLeadingFxTwinkle), self.btnLeadingFxTwinkle)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'N', self.btnLeadingFxBlockMove), self.btnLeadingFxBlockMove)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetLeadingFx, 'P', self.btnLeadingFxRandom), self.btnLeadingFxRandom)
+
+        # Commands Speed Menu
+        speedMenu = wx.Menu()
+        self.btnSpeed1 = speedMenu.Append(wx.ID_ANY, '1 Slow', kind=wx.ITEM_CHECK)
+        self.btnSpeed2 = speedMenu.Append(wx.ID_ANY, '2', kind=wx.ITEM_CHECK)
+        self.btnSpeed3 = speedMenu.Append(wx.ID_ANY, '3', kind=wx.ITEM_CHECK)
+        self.btnSpeed4 = speedMenu.Append(wx.ID_ANY, '4 Fast', kind=wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetSpeed, 4, self.btnSpeed1), self.btnSpeed1)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetSpeed, 3, self.btnSpeed2), self.btnSpeed2)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetSpeed, 2, self.btnSpeed3), self.btnSpeed3)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetSpeed, 1, self.btnSpeed4), self.btnSpeed4)
+
+        # Commands Display Effect Menu
+        displayEffectMenu = wx.Menu()
+        self.btnDisplayFxNormal = displayEffectMenu.Append(wx.ID_ANY, 'Normal', kind=wx.ITEM_CHECK)
+        self.btnDisplayFxBlinking = displayEffectMenu.Append(wx.ID_ANY, 'Blinking', kind=wx.ITEM_CHECK)
+        self.btnDisplayFxSong1 = displayEffectMenu.Append(wx.ID_ANY, 'Song 1', kind=wx.ITEM_CHECK)
+        self.btnDisplayFxSong2 = displayEffectMenu.Append(wx.ID_ANY, 'Song 2', kind=wx.ITEM_CHECK)
+        self.btnDisplayFxSong3 = displayEffectMenu.Append(wx.ID_ANY, 'Song 3', kind=wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetDisplayFx, 'A', self.btnDisplayFxNormal), self.btnDisplayFxNormal)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetDisplayFx, 'B', self.btnDisplayFxBlinking), self.btnDisplayFxBlinking)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetDisplayFx, 'C', self.btnDisplayFxSong1), self.btnDisplayFxSong1)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetDisplayFx, 'D', self.btnDisplayFxSong2), self.btnDisplayFxSong2)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetDisplayFx, 'E', self.btnDisplayFxSong3), self.btnDisplayFxSong3)
+
+        # Commands Special Funtion Menu
+        specialFuntionMenu = wx.Menu()
+        self.btnSpecialFxBell = specialFuntionMenu.Append(wx.ID_ANY, 'Bell')
+        self.btnSpecialFxDate = specialFuntionMenu.Append(wx.ID_ANY, 'Date')
+        self.btnSpecialFxTime = specialFuntionMenu.Append(wx.ID_ANY, 'Time')
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<BA>'), self.btnSpecialFxBell)
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<KD>'), self.btnSpecialFxDate)
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<KT>'), self.btnSpecialFxTime)
+
+        # Commands Closing Effect Menu
+        closingEffectMenu = wx.Menu()
+        self.btnClosingFxImmediate = closingEffectMenu.Append(wx.ID_ANY, 'Immediate', kind=wx.ITEM_CHECK)
+        self.btnClosingFxXopen = closingEffectMenu.Append(wx.ID_ANY, 'Xopen', kind=wx.ITEM_CHECK)
+        self.btnClosingFxCurtainUp = closingEffectMenu.Append(wx.ID_ANY, 'Curtain Up', kind=wx.ITEM_CHECK)
+        self.btnClosingFxCurtainDown = closingEffectMenu.Append(wx.ID_ANY, 'Curtain Down', kind=wx.ITEM_CHECK)
+        self.btnClosingFxScrollLeft = closingEffectMenu.Append(wx.ID_ANY, 'Scroll Left', kind=wx.ITEM_CHECK)
+        self.btnClosingFxScrollRight = closingEffectMenu.Append(wx.ID_ANY, 'Scroll Right', kind=wx.ITEM_CHECK)
+        self.btnClosingFxVopen = closingEffectMenu.Append(wx.ID_ANY, 'Vopen', kind=wx.ITEM_CHECK)
+        self.btnClosingFxVclose = closingEffectMenu.Append(wx.ID_ANY, 'Vclose', kind=wx.ITEM_CHECK)
+        self.btnClosingFxScrollUp = closingEffectMenu.Append(wx.ID_ANY, 'Scroll Up', kind=wx.ITEM_CHECK)
+        self.btnClosingFxScrollDown = closingEffectMenu.Append(wx.ID_ANY, 'Scroll Down', kind=wx.ITEM_CHECK)
+        self.btnClosingFxHold = closingEffectMenu.Append(wx.ID_ANY, 'Hold', kind=wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'A', self.btnClosingFxImmediate), self.btnClosingFxImmediate)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'B', self.btnClosingFxXopen), self.btnClosingFxXopen)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'C', self.btnClosingFxCurtainUp), self.btnClosingFxCurtainUp)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'D', self.btnClosingFxCurtainDown), self.btnClosingFxCurtainDown)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'E', self.btnClosingFxScrollLeft), self.btnClosingFxScrollLeft)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'F', self.btnClosingFxScrollRight), self.btnClosingFxScrollRight)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'G', self.btnClosingFxVopen), self.btnClosingFxVopen)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'H', self.btnClosingFxVclose), self.btnClosingFxVclose)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'I', self.btnClosingFxScrollUp), self.btnClosingFxScrollUp)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'J', self.btnClosingFxScrollDown), self.btnClosingFxScrollDown)
+        self.Bind(wx.EVT_MENU, partial(self.OnSetClosingFx, 'K', self.btnClosingFxHold), self.btnClosingFxHold)
+
+        # Commands Font Menu
+        fontMenu = wx.Menu()
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<AA>'), fontMenu.Append(wx.ID_ANY, '4x7 (narrow size)'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<AC>'), fontMenu.Append(wx.ID_ANY, '5x7 (normal size)'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<AB>'), fontMenu.Append(wx.ID_ANY, '6x7 (bold size)'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<AD>'), fontMenu.Append(wx.ID_ANY, '7x13 (large size)'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<AE>'), fontMenu.Append(wx.ID_ANY, '5x8 (long size)'))
+
+        # Commands Color Menu
+        colorMenu = wx.Menu()
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CB>'), colorMenu.Append(wx.ID_ANY, 'Red'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CE>'), colorMenu.Append(wx.ID_ANY, 'Green'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CH>'), colorMenu.Append(wx.ID_ANY, 'Orange'))
+        colorMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CL>'), colorMenu.Append(wx.ID_ANY, 'Inversed Red'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CM>'), colorMenu.Append(wx.ID_ANY, 'Inversed Green'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CN>'), colorMenu.Append(wx.ID_ANY, 'Inversed Orange'))
+        colorMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CP>'), colorMenu.Append(wx.ID_ANY, 'Red On Green'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CQ>'), colorMenu.Append(wx.ID_ANY, 'Green On Red'))
+        colorMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CR>'), colorMenu.Append(wx.ID_ANY, 'RYG'))
+        self.Bind(wx.EVT_MENU, partial(self.OnInsertCmd, '<CS>'), colorMenu.Append(wx.ID_ANY, 'Rainbow'))
+
+        # Commands Menu
+        commandsMenu = wx.Menu()
+        menubar.Append(commandsMenu, '&Commands')
+        self.Bind(wx.EVT_MENU, self.OnSetEditPage, commandsMenu.Append(wx.ID_ANY, 'Set &Page to Edit...'))
+        commandsMenu.AppendSeparator()
+        commandsMenu.Append(wx.ID_ANY, '&Leading Effect', leadingEffectMenu)
+        commandsMenu.Append(wx.ID_ANY, '&Move Speed', speedMenu)
+        commandsMenu.Append(wx.ID_ANY, '&Display Effect', displayEffectMenu)
+        self.Bind(wx.EVT_MENU, self.OnSetDisplayTime, commandsMenu.Append(wx.ID_ANY, '&Display Time...'))
+        commandsMenu.Append(wx.ID_ANY, '&Closing Effect', closingEffectMenu)
+        commandsMenu.Append(wx.ID_ANY, '&Special Function', specialFuntionMenu)
+        commandsMenu.AppendSeparator()
+        #self.btnEuropeanChar = commandsMenu.Append(wx.ID_ANY, 'Insert European &Char...') # todo
+        #self.btnGraphic = commandsMenu.Append(wx.ID_ANY, 'Edit/Insert &Graphics...') # todo
+        #commandsMenu.AppendSeparator()
+        commandsMenu.Append(wx.ID_ANY, '&Font', fontMenu)
+        commandsMenu.Append(wx.ID_ANY, '&Color', colorMenu)
+
+        # Functions Menu
+        functionsMenu = wx.Menu()
+        menubar.Append(functionsMenu, '&Functions')
+        self.Bind(wx.EVT_MENU, self.OnSendMessage, functionsMenu.Append(wx.ID_ANY, '&Send Raw Command...'))
+        self.Bind(wx.EVT_MENU, self.OnSetDefaultRunPage, functionsMenu.Append(wx.ID_ANY, '&Set Default Run Page...'))
+        functionsMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, self.OnSetId, functionsMenu.Append(wx.ID_ANY, '&Set ID...'))
+        self.Bind(wx.EVT_MENU, self.OnSetClock, functionsMenu.Append(wx.ID_ANY, '&Set Clock'))
+        self.Bind(wx.EVT_MENU, self.OnSetBrightness, functionsMenu.Append(wx.ID_ANY, '&Set Brightness...'))
+        self.Bind(wx.EVT_MENU, self.OnSetSchedule, functionsMenu.Append(wx.ID_ANY, '&Set Schedule...'))
+        functionsMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, self.OnFactoryReset, functionsMenu.Append(wx.ID_ANY, '&Delete All Content (Factory Reset)'))
+
+        # Help Menu
+        helpMenu = wx.Menu()
+        menubar.Append(helpMenu, '&Help')
+        self.Bind(wx.EVT_MENU, self.OnOpenReadme, helpMenu.Append(wx.ID_HELP, '&Read Me'))
+        self.Bind(wx.EVT_MENU, self.OnOpenAboutDialog, helpMenu.Append(wx.ID_ABOUT, '&About...'))
+
+        # Toolbar
+        iconSize = (24,24)
+        toolbar = self.CreateToolBar()
+        qtool = toolbar.AddTool(wx.ID_ANY, 'Send', wx.ArtProvider.GetBitmap(wx.ART_TICK_MARK, wx.ART_TOOLBAR, iconSize))
+        self.Bind(wx.EVT_TOOL, self.OnSendPage, qtool)
+        toolbar.Realize()
+
+        # Window Content
+        panel = wx.Panel(self, wx.ID_ANY)
+        self.textField = wx.TextCtrl(panel, wx.ID_ANY, style=wx.TE_MULTILINE|wx.HSCROLL)
+        fontMonospace = wx.Font(12, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
+        self.textField.SetFont(fontMonospace)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.textField, 1, wx.ALL|wx.EXPAND, 5)
+        panel.SetSizer(sizer)
+
+        # Window Settings
+        self.SetSize(500, 400)
+        self.SetCustomTitle()
+        self.Centre()
+
+    def SetCustomTitle(self):
+        self.SetTitle(self.PRODUCT_NAME+" ("+self.serialPort+":"+str(self.deviceId)+", Page "+self.page+")")
+
+    def OnOpenReadme(self, e):
+        print(e)
+
+    def OnOpenAboutDialog(self, e):
+        info = wx.adv.AboutDialogInfo()
+        #info.SetIcon(wx.Icon('hunter.png', wx.BITMAP_TYPE_PNG))
+        info.SetName(self.PRODUCT_NAME)
+        info.SetVersion(self.PRODUCT_VERSION)
+        info.SetDescription(
+            """LED Display Control Library, Command Line Utility and Graphical User Interface (GUI)."""
+            """\n"""
+            """This library was made for providing Linux support for the following devices: Maplin N00GA - using the AM004-03128/03127 LED Display communication board, Velleman MML16CN, MML16R, MML24CN, McCrypt LED Light Writing 590996 (the Conrad Laufschrift)"""
+        )
+        info.SetCopyright('© 2020 Georg Sieber')
+        info.SetWebSite('https://github.com/schorschii/fiveleds')
+        info.SetLicence('GNU General Public License v3.0')
+        info.AddDeveloper('Georg Sieber (Further Development & GUI) https://github.com/schorschii')
+        info.AddDeveloper('hackerdeen: Midder-57N & pisuke (Base Code) https://github.com/hackerdeen')
+        #info.AddDocWriter('Georg Sieber')
+        #info.AddArtist('Georg Sieber')
+        #info.AddTranslator('Georg Sieber')
+        wx.adv.AboutBox(info)
+
+    def OnSendMessage(self, e):
+        if(self.SetupConnection()):
+            dlg = wx.TextEntryDialog(self, "Enter a raw command to send")
+            dlg.ShowModal()
+            result = dlg.GetValue()
+            if(result != ""):
+                self.ld.send(result)
+
+    def OnSetDefaultRunPage(self, e):
+        if(self.SetupConnection()):
+            dlg = wx.TextEntryDialog(self, "Enter a default run page (A..Z)")
+            dlg.ShowModal()
+            result = dlg.GetValue()
+            self.ld.send('<RP'+result+'>')
+
+    def OnSetId(self, e):
+        if(self.SetupConnection()):
+            dlg = wx.TextEntryDialog(self, "Enter new ID (1..255)")
+            dlg.ShowModal()
+            result = dlg.GetValue()
+            self.ld.setid(newid=int(result))
+
+    def OnSetClock(self, e):
+        if(self.SetupConnection()):
+            self.ld.setclock()
+
+    def OnSetBrightness(self, e):
+        if(self.SetupConnection()):
+            dlg = wx.TextEntryDialog(self, "Enter brightness level (A..D)")
+            dlg.ShowModal()
+            result = dlg.GetValue()
+            if(result in ["A", "B", "C", "D"]):
+                self.ld.brightness(result)
+
+    def OnSetSchedule(self, e):
+        if(self.SetupConnection()):
+            dlg = wx.TextEntryDialog(self, "Enter which schedule should be edited (e.g. A..E)")
+            dlg.ShowModal()
+            schedule = dlg.GetValue()
+
+            dlg = wx.TextEntryDialog(self, "Enter which pages should be shown (e.g. ABDEF). Leave empty to disable this schedule.")
+            dlg.ShowModal()
+            pages = dlg.GetValue()
+
+            if(pages == ""):
+                self.ld.updatesched(schedule, active=False)
+            else:
+                dlg = wx.TextEntryDialog(self, "Enter schedule start time (YYMMDDHHmm).")
+                dlg.ShowModal()
+                start = dlg.GetValue()
+
+                dlg = wx.TextEntryDialog(self, "Enter schedule end time (YYMMDDHHmm).")
+                dlg.ShowModal()
+                end = dlg.GetValue()
+
+                self.ld.updatesched(schedule, pages, active=True, start=start, end=end)
+
+            self.ld.pushchanges()
+
+    def OnFactoryReset(self, e):
+        if(self.SetupConnection()):
+            self.ld.send('<D*>')
+
+    def OnInsertCmd(self, cmd, e):
+        self.textField.WriteText(cmd)
+
+    def OnSetEditPage(self, e):
+        if(self.SetupConnection()):
+            dlg = wx.TextEntryDialog(self, "Enter page to edit (A..Z)")
+            dlg.ShowModal()
+            result = dlg.GetValue()
+            if(result != ""):
+                self.page = result
+                self.SetCustomTitle()
+
+    def OnSetDisplayTime(self, e):
+        if(self.SetupConnection()):
+            dlg = wx.TextEntryDialog(self, "Enter display (wait) time (A..Z)")
+            dlg.ShowModal()
+            result = dlg.GetValue()
+            if(result != ""):
+                self.waitTime = result
+
+    def OnSetLeadingFx(self, fx, menuItem, e):
+        self.btnLeadingFxImmediate.Check(False)
+        self.btnLeadingFxXopen.Check(False)
+        self.btnLeadingFxCurtainUp.Check(False)
+        self.btnLeadingFxCurtainDown.Check(False)
+        self.btnLeadingFxScrollLeft.Check(False)
+        self.btnLeadingFxScrollRight.Check(False)
+        self.btnLeadingFxVopen.Check(False)
+        self.btnLeadingFxVclose.Check(False)
+        self.btnLeadingFxScrollUp.Check(False)
+        self.btnLeadingFxScrollDown.Check(False)
+        self.btnLeadingFxHold.Check(False)
+        self.btnLeadingFxSnow.Check(False)
+        self.btnLeadingFxTwinkle.Check(False)
+        self.btnLeadingFxBlockMove.Check(False)
+        self.btnLeadingFxRandom.Check(False)
+        menuItem.Check(True)
+        self.leadingFx = fx
+
+    def OnSetSpeed(self, speed, menuItem, e):
+        self.btnSpeed1.Check(False)
+        self.btnSpeed2.Check(False)
+        self.btnSpeed3.Check(False)
+        self.btnSpeed4.Check(False)
+        menuItem.Check(True)
+        self.speed = speed
+        self.CalcDisplayMethod()
+
+    def OnSetDisplayFx(self, fx, menuItem, e):
+        self.btnDisplayFxNormal.Check(False)
+        self.btnDisplayFxBlinking.Check(False)
+        self.btnDisplayFxSong1.Check(False)
+        self.btnDisplayFxSong2.Check(False)
+        self.btnDisplayFxSong3.Check(False)
+        menuItem.Check(True)
+        self.displayFx = fx
+        self.CalcDisplayMethod()
+
+    def CalcDisplayMethod(self):
+        DISPLAY_METHOD_MATRIX = {
+            1 : { "A":"A", "B":"B", "C":"C", "D":"D", "E":"E" },
+            2 : { "A":"Q", "B":"R", "C":"S", "D":"T", "E":"U" },
+            3 : { "A":"a", "B":"b", "C":"c", "D":"d", "E":"e" },
+            4 : { "A":"q", "B":"r", "C":"s", "D":"t", "E":"u" },
+        }
+        self.displayMethod = "Q" # fallback to default
+        if(self.speed in DISPLAY_METHOD_MATRIX and self.displayFx in DISPLAY_METHOD_MATRIX[self.speed]):
+            self.displayMethod = DISPLAY_METHOD_MATRIX[self.speed][self.displayFx]
+
+    def OnSetClosingFx(self, fx, menuItem, e):
+        self.btnClosingFxImmediate.Check(False)
+        self.btnClosingFxXopen.Check(False)
+        self.btnClosingFxCurtainUp.Check(False)
+        self.btnClosingFxCurtainDown.Check(False)
+        self.btnClosingFxScrollLeft.Check(False)
+        self.btnClosingFxScrollRight.Check(False)
+        self.btnClosingFxVopen.Check(False)
+        self.btnClosingFxVclose.Check(False)
+        self.btnClosingFxScrollUp.Check(False)
+        self.btnClosingFxScrollDown.Check(False)
+        self.btnClosingFxHold.Check(False)
+        menuItem.Check(True)
+        self.laggingFx = fx
+
+    def SetupConnection(self):
+        self.ld = fiveleds.fiveleds(dev=self.serialPort, conf=self.fiveledsConfigFile, device=self.deviceId)
+        if(self.ld.ser == None):
+            wx.MessageBox("Cannot send data. Please check if serial port "+self.serialPort+" is correct and if you have privileges to use this port (maybe try with sudo). If the error persists, please use the command line tool to examine the error.", "Connection Error", wx.ICON_ERROR | wx.OK, self)
+            return False
+        else:
+            return True
+
+    def OnSelectSerialPort(self, e):
+        with wx.FileDialog(self,
+            "Choose Serial Port", wildcard="All Files *|*",
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+        ) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return
+            wx.MessageBox(fileDialog.GetPath(), "Please confirm", wx.ICON_QUESTION | wx.YES_NO, self)
+        self.SetCustomTitle()
+
+    def OnSendPage(self, e):
+        if(self.SetupConnection()):
+            self.ld.updateline(self.page, self.textField.GetValue(), self.line, self.leadingFx, self.displayMethod, self.waitTime, self.laggingFx)
+            self.ld.pushchanges()
+
+    def OnQuit(self, e):
+        self.Close()
+
+
+def main():
+    app = wx.App()
+    window = ledgui(None)
+    window.Show()
+    app.MainLoop()
+
+if __name__ == '__main__':
+    main()
