@@ -1,5 +1,6 @@
 # fiveleds
 **LED Display Control Library, Command Line Utility and Graphical User Interface (GUI)**
+![Screenshot](.github/screenshot.png)
 
 ## Compatibility
 This library was made for providing Linux support for the following devices:
