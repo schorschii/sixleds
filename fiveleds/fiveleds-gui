@@ -29,6 +29,7 @@ class ledgui(wx.Frame):
 
     def __init__(self, *args, **kwargs):
         super(ledgui, self).__init__(*args, **kwargs)
+        self.SetupConnection(message=False)
         self.InitUI()
 
     def InitUI(self):
@@ -259,7 +260,6 @@ class ledgui(wx.Frame):
         self.statusBar.SetStatusText("Chars: "+str(len(self.textField.GetValue())))
 
     def OnPageChanged(self, e):
-        self.SetupConnection()
         self.page = self.PAGES[self.listBox.GetSelection()]
         self.SetCustomTitle()
         value = self.ld.getline(self.page)
@@ -569,10 +569,11 @@ class ledgui(wx.Frame):
         menuItem.Check(True)
         self.laggingFx = fx
 
-    def SetupConnection(self):
+    def SetupConnection(self, message=True):
         self.ld = fiveleds.fiveleds(dev=self.serialPort, conf=self.fiveledsConfigFile, device=self.deviceId)
         if(self.ld.ser == None):
-            wx.MessageBox("Cannot send data. Please check if serial port »"+self.serialPort+"« is correct and if you have privileges to use this port (add your user to group dialout via »usermod -a -G dialout USERNAME« and log in again).\n\nIf the error persists, please use the command line tool to examine the error.", "Connection Error", wx.ICON_ERROR | wx.OK, self)
+            if(message):
+                wx.MessageBox("Cannot send data. Please check if serial port »"+self.serialPort+"« is correct and if you have privileges to use this port (add your user to group dialout via »usermod -a -G dialout USERNAME« and log in again).\n\nIf the error persists, please use the command line tool to examine the error.", "Connection Error", wx.ICON_ERROR | wx.OK, self)
             return False
         else:
             return True
