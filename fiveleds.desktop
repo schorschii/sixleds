@@ -3,6 +3,6 @@ Type=Application
 Name=fiveleds GUI
 Exec=fiveleds-gui
 Terminal=false
-Icon=format-text-direction-ltr-symbolic
+Icon=fiveleds
 Categories=Application;Other
 Comment=LED Display Control Software

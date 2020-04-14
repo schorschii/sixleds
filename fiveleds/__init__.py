@@ -565,6 +565,10 @@ class fiveleds():
                 o.start(start)
                 o.end(end)
 
+    def getline(self, page, line='1'):
+        if(line in self.lines and page in self.lines[line]):
+            return self.lines[line][page]
+
     def show(self):
         """Show the Configuration"""
         for linenum, line in  sorted(self.lines.items()):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from os import path
 from functools import partial
 import fiveleds
 import wx
@@ -9,7 +10,7 @@ import wx.adv
 
 class ledgui(wx.Frame):
     PRODUCT_NAME = "fiveleds GUI"
-    PRODUCT_VERSION = "0.2.0"
+    PRODUCT_VERSION = "0.3.0"
 
     PAGES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
@@ -49,10 +50,10 @@ class ledgui(wx.Frame):
         # Edit Menu
         editMenu = wx.Menu()
         menubar.Append(editMenu, '&Edit')
-        self.Bind(wx.EVT_MENU, self.OnSelectSerialPort, editMenu.Append(wx.ID_CUT, '&Cut'))
-        self.Bind(wx.EVT_MENU, self.OnSendPage, editMenu.Append(wx.ID_COPY, '&Copy'))
-        self.Bind(wx.EVT_MENU, self.OnQuit, editMenu.Append(wx.ID_PASTE, '&Paste'))
-        self.Bind(wx.EVT_MENU, self.OnQuit, editMenu.Append(wx.ID_DELETE, '&Delete'))
+        self.Bind(wx.EVT_MENU, self.OnCut, editMenu.Append(wx.ID_CUT, '&Cut'))
+        self.Bind(wx.EVT_MENU, self.OnCopy, editMenu.Append(wx.ID_COPY, '&Copy'))
+        self.Bind(wx.EVT_MENU, self.OnPaste, editMenu.Append(wx.ID_PASTE, '&Paste'))
+        self.Bind(wx.EVT_MENU, self.OnDelete, editMenu.Append(wx.ID_DELETE, '&Delete'))
 
         # Commands Leading Effect Menu
         leadingEffectMenu = wx.Menu()
@@ -172,8 +173,6 @@ class ledgui(wx.Frame):
         # Commands Menu
         commandsMenu = wx.Menu()
         menubar.Append(commandsMenu, '&Commands')
-        self.Bind(wx.EVT_MENU, self.OnSetEditPage, commandsMenu.Append(wx.ID_ANY, 'Set &Page to Edit...'))
-        commandsMenu.AppendSeparator()
         commandsMenu.Append(wx.ID_ANY, '&Leading Effect', leadingEffectMenu)
         commandsMenu.Append(wx.ID_ANY, '&Move Speed', speedMenu)
         commandsMenu.Append(wx.ID_ANY, '&Display Effect', displayEffectMenu)
@@ -214,28 +213,174 @@ class ledgui(wx.Frame):
         toolbar.Realize()
 
         # Window Content
-        panel = wx.Panel(self, wx.ID_ANY)
-        self.textField = wx.TextCtrl(panel, wx.ID_ANY, style=wx.TE_MULTILINE|wx.HSCROLL)
+        splitter = wx.SplitterWindow(self)
+        leftP = wx.Panel(splitter)
+        rightP = wx.Panel(splitter)
+
+        self.listBox = wx.ListBox(leftP, wx.ID_ANY, style=wx.LB_SINGLE)
+        self.listBox.Bind(wx.EVT_LISTBOX, self.OnPageChanged)
+        self.listBox.InsertItems(self.PAGES, 0)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.listBox, 1, wx.ALL|wx.EXPAND, 5)
+        leftP.SetSizer(sizer)
+
+        self.textField = wx.TextCtrl(rightP, wx.ID_ANY, style=wx.TE_MULTILINE|wx.HSCROLL)
+        self.textField.Bind(wx.EVT_TEXT, self.OnTextChanged)
         fontMonospace = wx.Font(12, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
         self.textField.SetFont(fontMonospace)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.textField, 1, wx.ALL|wx.EXPAND, 5)
-        panel.SetSizer(sizer)
+        rightP.SetSizer(sizer)
+
+        splitter.SplitVertically(leftP, rightP)
+        splitter.SetSashGravity(0.2)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(splitter, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+
+        self.statusBar = self.CreateStatusBar(1)
+        self.OnTextChanged(None)
 
         # Window Settings
-        self.SetSize(500, 400)
+        iconPath = '/usr/local/share/pixmaps/fiveleds.png'
+        if(path.exists(iconPath)):
+            self.icon = wx.Icon(iconPath, wx.BITMAP_TYPE_PNG)
+            self.SetIcon(self.icon)
+        self.SetSize(500, 390)
+        self.SetMinSize((500, 390))
         self.SetCustomTitle()
         self.Centre()
 
     def SetCustomTitle(self):
-        self.SetTitle(self.PRODUCT_NAME+" ("+self.serialPort+":"+str(self.deviceId)+", Page "+self.page+")")
+        self.SetTitle(self.PRODUCT_NAME+" ("+self.serialPort+", Device "+str(self.deviceId)+", Page "+self.page+")")
+
+    def OnTextChanged(self, e):
+        self.statusBar.SetStatusText("Chars: "+str(len(self.textField.GetValue())))
+
+    def OnPageChanged(self, e):
+        self.SetupConnection()
+        self.page = self.PAGES[self.listBox.GetSelection()]
+        self.SetCustomTitle()
+        value = self.ld.getline(self.page)
+        if(value != None):
+            self.textField.SetValue(value.MM)
+
+            self.leadingFx = value.FX
+            self.DeselectLeadingFx()
+            if(value.FX == 'A'): self.btnLeadingFxImmediate.Check(True)
+            elif(value.FX == 'B'): self.btnLeadingFxXopen.Check(True)
+            elif(value.FX == 'C'): self.btnLeadingFxCurtainUp.Check(True)
+            elif(value.FX == 'D'): self.btnLeadingFxCurtainDown.Check(True)
+            elif(value.FX == 'E'): self.btnLeadingFxScrollLeft.Check(True)
+            elif(value.FX == 'F'): self.btnLeadingFxScrollRight.Check(True)
+            elif(value.FX == 'G'): self.btnLeadingFxVopen.Check(True)
+            elif(value.FX == 'H'): self.btnLeadingFxVclose.Check(True)
+            elif(value.FX == 'I'): self.btnLeadingFxScrollUp.Check(True)
+            elif(value.FX == 'J'): self.btnLeadingFxScrollDown.Check(True)
+            elif(value.FX == 'K'): self.btnLeadingFxHold.Check(True)
+            elif(value.FX == 'L'): self.btnLeadingFxSnow.Check(True)
+            elif(value.FX == 'M'): self.btnLeadingFxTwinkle.Check(True)
+            elif(value.FX == 'N'): self.btnLeadingFxBlockMove.Check(True)
+            elif(value.FX == 'P'): self.btnLeadingFxRandom.Check(True)
+
+            self.DeselectDisplayFx()
+            self.DeselectSpeed()
+            if(value.MX == 'A'):
+                self.btnSpeed4.Check(True); self.btnDisplayFxNormal.Check(True)
+                self.speed = 4; self.displayFx = 'A'
+            elif(value.MX == 'B'):
+                self.btnSpeed4.Check(True); self.btnDisplayFxBlinking.Check(True)
+                self.speed = 4; self.displayFx = 'B'
+            elif(value.MX == 'C'):
+                self.btnSpeed4.Check(True); self.btnDisplayFxSong1.Check(True)
+                self.speed = 4; self.displayFx = 'C'
+            elif(value.MX == 'D'):
+                self.btnSpeed4.Check(True); self.btnDisplayFxSong2.Check(True)
+                self.speed = 4; self.displayFx = 'D'
+            elif(value.MX == 'E'):
+                self.btnSpeed4.Check(True); self.btnDisplayFxSong3.Check(True)
+                self.speed = 4; self.displayFx = 'E'
+            elif(value.MX == 'Q'):
+                self.btnSpeed3.Check(True); self.btnDisplayFxNormal.Check(True)
+                self.speed = 3; self.displayFx = 'A'
+            elif(value.MX == 'R'):
+                self.btnSpeed3.Check(True); self.btnDisplayFxBlinking.Check(True)
+                self.speed = 3; self.displayFx = 'B'
+            elif(value.MX == 'S'):
+                self.btnSpeed3.Check(True); self.btnDisplayFxSong1.Check(True)
+                self.speed = 3; self.displayFx = 'C'
+            elif(value.MX == 'T'):
+                self.btnSpeed3.Check(True); self.btnDisplayFxSong2.Check(True)
+                self.speed = 3; self.displayFx = 'D'
+            elif(value.MX == 'U'):
+                self.btnSpeed3.Check(True); self.btnDisplayFxSong3.Check(True)
+                self.speed = 3; self.displayFx = 'E'
+            elif(value.MX == 'a'):
+                self.btnSpeed2.Check(True); self.btnDisplayFxNormal.Check(True)
+                self.speed = 2; self.displayFx = 'A'
+            elif(value.MX == 'b'):
+                self.btnSpeed2.Check(True); self.btnDisplayFxBlinking.Check(True)
+                self.speed = 2; self.displayFx = 'B'
+            elif(value.MX == 'c'):
+                self.btnSpeed2.Check(True); self.btnDisplayFxSong1.Check(True)
+                self.speed = 2; self.displayFx = 'C'
+            elif(value.MX == 'd'):
+                self.btnSpeed2.Check(True); self.btnDisplayFxSong2.Check(True)
+                self.speed = 2; self.displayFx = 'D'
+            elif(value.MX == 'e'):
+                self.btnSpeed2.Check(True); self.btnDisplayFxSong3.Check(True)
+                self.speed = 2; self.displayFx = 'E'
+            elif(value.MX == 'q'):
+                self.btnSpeed1.Check(True); self.btnDisplayFxNormal.Check(True)
+                self.speed = 1; self.displayFx = 'A'
+            elif(value.MX == 'r'):
+                self.btnSpeed1.Check(True); self.btnDisplayFxBlinking.Check(True)
+                self.speed = 1; self.displayFx = 'B'
+            elif(value.MX == 's'):
+                self.btnSpeed1.Check(True); self.btnDisplayFxSong1.Check(True)
+                self.speed = 1; self.displayFx = 'C'
+            elif(value.MX == 't'):
+                self.btnSpeed1.Check(True); self.btnDisplayFxSong2.Check(True)
+                self.speed = 1; self.displayFx = 'D'
+            elif(value.MX == 'u'):
+                self.btnSpeed1.Check(True); self.btnDisplayFxSong3.Check(True)
+                self.speed = 1; self.displayFx = 'E'
+            self.CalcDisplayMethod()
+
+            self.laggingFx = value.FY
+            self.DeselectClosingFx()
+            if(value.FY == 'A'): self.btnClosingFxImmediate.Check(True)
+            elif(value.FY == 'B'): self.btnClosingFxXopen.Check(True)
+            elif(value.FY == 'C'): self.btnClosingFxCurtainUp.Check(True)
+            elif(value.FY == 'D'): self.btnClosingFxCurtainDown.Check(True)
+            elif(value.FY == 'E'): self.btnClosingFxScrollLeft.Check(True)
+            elif(value.FY == 'F'): self.btnClosingFxScrollRight.Check(True)
+            elif(value.FY == 'G'): self.btnClosingFxVopen.Check(True)
+            elif(value.FY == 'H'): self.btnClosingFxVclose.Check(True)
+            elif(value.FY == 'I'): self.btnClosingFxScrollUp.Check(True)
+            elif(value.FY == 'J'): self.btnClosingFxScrollDown.Check(True)
+            elif(value.FY == 'K'): self.btnClosingFxHold.Check(True)
+
+    def OnCut(self, e):
+        self.textField.Cut()
+
+    def OnCopy(self, e):
+        self.textField.Copy()
+
+    def OnPaste(self, e):
+        self.textField.Paste()
+
+    def OnDelete(self, e):
+        self.textField.WriteText("")
 
     def OnOpenReadme(self, e):
         print(e)
 
     def OnOpenAboutDialog(self, e):
         info = wx.adv.AboutDialogInfo()
-        #info.SetIcon(wx.Icon('hunter.png', wx.BITMAP_TYPE_PNG))
+        if(self.icon != None):
+            info.SetIcon(self.icon)
         info.SetName(self.PRODUCT_NAME)
         info.SetVersion(self.PRODUCT_VERSION)
         info.SetDescription(
@@ -251,7 +396,7 @@ class ledgui(wx.Frame):
         #info.AddDocWriter('Georg Sieber')
         #info.AddArtist('Georg Sieber')
         #info.AddTranslator('Georg Sieber')
-        wx.adv.AboutBox(info)
+        wx.adv.AboutBox(info, parent=self)
 
     def OnSendMessage(self, e):
         if(self.SetupConnection()):
@@ -337,18 +482,6 @@ class ledgui(wx.Frame):
     def OnInsertCmd(self, cmd, e):
         self.textField.WriteText(cmd)
 
-    def OnSetEditPage(self, e):
-        if(self.SetupConnection()):
-            dlg = wx.TextEntryDialog(self, "Enter page to edit (A..Z)")
-            if(dlg.ShowModal() != wx.ID_OK):
-                return
-            result = dlg.GetValue()
-            if(result not in self.PAGES):
-                wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
-                return
-            self.page = result
-            self.SetCustomTitle()
-
     def OnSetDisplayTime(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter display (wait) time (A..Z)")
@@ -360,7 +493,7 @@ class ledgui(wx.Frame):
                 return
             self.waitTime = result
 
-    def OnSetLeadingFx(self, fx, menuItem, e):
+    def DeselectLeadingFx(self):
         self.btnLeadingFxImmediate.Check(False)
         self.btnLeadingFxXopen.Check(False)
         self.btnLeadingFxCurtainUp.Check(False)
@@ -376,24 +509,33 @@ class ledgui(wx.Frame):
         self.btnLeadingFxTwinkle.Check(False)
         self.btnLeadingFxBlockMove.Check(False)
         self.btnLeadingFxRandom.Check(False)
+
+    def OnSetLeadingFx(self, fx, menuItem, e):
+        self.DeselectLeadingFx()
         menuItem.Check(True)
         self.leadingFx = fx
 
-    def OnSetSpeed(self, speed, menuItem, e):
+    def DeselectSpeed(self):
         self.btnSpeed1.Check(False)
         self.btnSpeed2.Check(False)
         self.btnSpeed3.Check(False)
         self.btnSpeed4.Check(False)
+
+    def OnSetSpeed(self, speed, menuItem, e):
+        self.DeselectSpeed()
         menuItem.Check(True)
         self.speed = speed
         self.CalcDisplayMethod()
 
-    def OnSetDisplayFx(self, fx, menuItem, e):
+    def DeselectDisplayFx(self):
         self.btnDisplayFxNormal.Check(False)
         self.btnDisplayFxBlinking.Check(False)
         self.btnDisplayFxSong1.Check(False)
         self.btnDisplayFxSong2.Check(False)
         self.btnDisplayFxSong3.Check(False)
+
+    def OnSetDisplayFx(self, fx, menuItem, e):
+        self.DeselectDisplayFx()
         menuItem.Check(True)
         self.displayFx = fx
         self.CalcDisplayMethod()
@@ -409,7 +551,7 @@ class ledgui(wx.Frame):
         if(self.speed in DISPLAY_METHOD_MATRIX and self.displayFx in DISPLAY_METHOD_MATRIX[self.speed]):
             self.displayMethod = DISPLAY_METHOD_MATRIX[self.speed][self.displayFx]
 
-    def OnSetClosingFx(self, fx, menuItem, e):
+    def DeselectClosingFx(self):
         self.btnClosingFxImmediate.Check(False)
         self.btnClosingFxXopen.Check(False)
         self.btnClosingFxCurtainUp.Check(False)
@@ -421,13 +563,16 @@ class ledgui(wx.Frame):
         self.btnClosingFxScrollUp.Check(False)
         self.btnClosingFxScrollDown.Check(False)
         self.btnClosingFxHold.Check(False)
+
+    def OnSetClosingFx(self, fx, menuItem, e):
+        self.DeselectClosingFx()
         menuItem.Check(True)
         self.laggingFx = fx
 
     def SetupConnection(self):
         self.ld = fiveleds.fiveleds(dev=self.serialPort, conf=self.fiveledsConfigFile, device=self.deviceId)
         if(self.ld.ser == None):
-            wx.MessageBox("Cannot send data. Please check if serial port "+self.serialPort+" is correct and if you have privileges to use this port (maybe try with sudo). If the error persists, please use the command line tool to examine the error.", "Connection Error", wx.ICON_ERROR | wx.OK, self)
+            wx.MessageBox("Cannot send data. Please check if serial port »"+self.serialPort+"« is correct and if you have privileges to use this port (add your user to group dialout via »usermod -a -G dialout USERNAME« and log in again).\n\nIf the error persists, please use the command line tool to examine the error.", "Connection Error", wx.ICON_ERROR | wx.OK, self)
             return False
         else:
             return True
