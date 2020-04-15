@@ -8,9 +8,56 @@ import wx
 import wx.adv
 
 
-class ledgui(wx.Frame):
+class fiveledsCharWindow(wx.Frame):
+    def __init__(self, *args, **kwargs):
+        super(fiveledsCharWindow, self).__init__(*args, **kwargs)
+        self.parent = self.GetParent()
+        self.InitUI()
+
+    def InitUI(self):
+        # Window Content
+        splitter = wx.SplitterWindow(self)
+        leftP = wx.Panel(splitter)
+        rightP = wx.Panel(splitter)
+
+        self.listBox = wx.ListBox(leftP, wx.ID_ANY, style=wx.LB_SINGLE)
+        self.listBox.SetFont(wx.Font(14, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+        displayItems = []
+        for key, value in fiveleds.opage.ttable.items():
+            displayItems.append(chr(key))
+        self.listBox.InsertItems(displayItems, 0)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.listBox, 1, wx.ALL|wx.EXPAND, 5)
+        leftP.SetSizer(sizer)
+
+        self.button = wx.Button(rightP, wx.ID_ANY, "Insert")
+        self.Bind(wx.EVT_BUTTON, self.OnClickInsert, self.button)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.button, 1, wx.ALL|wx.EXPAND, 5)
+        rightP.SetSizer(sizer)
+
+        splitter.SplitVertically(leftP, rightP)
+        splitter.SetSashGravity(0.8)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(splitter, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+
+        # Window Settings
+        self.SetIcon(self.parent.icon)
+        self.SetSize(400, 390)
+        self.SetMinSize((400, 390))
+        self.SetTitle("Insert Special Char")
+        self.Centre()
+
+    def OnClickInsert(self, e):
+        listBoxText = self.listBox.GetString(self.listBox.GetSelection())
+        self.parent.textField.WriteText(fiveleds.opage.ttable.get(ord(listBoxText), ""))
+
+
+class fiveledsMainWindow(wx.Frame):
     PRODUCT_NAME = "fiveleds GUI"
     PRODUCT_VERSION = "0.3.0"
+    PRODUCT_ICON = '/usr/local/share/pixmaps/fiveleds.png'
 
     PAGES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
@@ -28,7 +75,7 @@ class ledgui(wx.Frame):
     laggingFx = "E"
 
     def __init__(self, *args, **kwargs):
-        super(ledgui, self).__init__(*args, **kwargs)
+        super(fiveledsMainWindow, self).__init__(*args, **kwargs)
         self.SetupConnection(message=False)
         self.InitUI()
 
@@ -179,13 +226,13 @@ class ledgui(wx.Frame):
         commandsMenu.Append(wx.ID_ANY, '&Display Effect', displayEffectMenu)
         self.Bind(wx.EVT_MENU, self.OnSetDisplayTime, commandsMenu.Append(wx.ID_ANY, '&Display Time...'))
         commandsMenu.Append(wx.ID_ANY, '&Closing Effect', closingEffectMenu)
-        commandsMenu.Append(wx.ID_ANY, '&Special Function', specialFuntionMenu)
         commandsMenu.AppendSeparator()
-        #self.btnEuropeanChar = commandsMenu.Append(wx.ID_ANY, 'Insert European &Char...') # todo
-        #self.btnGraphic = commandsMenu.Append(wx.ID_ANY, 'Edit/Insert &Graphics...') # todo
-        #commandsMenu.AppendSeparator()
         commandsMenu.Append(wx.ID_ANY, '&Font', fontMenu)
         commandsMenu.Append(wx.ID_ANY, '&Color', colorMenu)
+        commandsMenu.AppendSeparator()
+        commandsMenu.Append(wx.ID_ANY, 'Insert &Special Function', specialFuntionMenu)
+        self.Bind(wx.EVT_MENU, self.OnInsertSpecialChar, commandsMenu.Append(wx.ID_ANY, 'Insert Special &Char...'))
+        #commandsMenu.Append(wx.ID_ANY, 'Edit/Insert &Graphics...') # todo
 
         # Functions Menu
         functionsMenu = wx.Menu()
@@ -227,8 +274,7 @@ class ledgui(wx.Frame):
 
         self.textField = wx.TextCtrl(rightP, wx.ID_ANY, style=wx.TE_MULTILINE|wx.HSCROLL)
         self.textField.Bind(wx.EVT_TEXT, self.OnTextChanged)
-        fontMonospace = wx.Font(12, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)
-        self.textField.SetFont(fontMonospace)
+        self.textField.SetFont(wx.Font(12, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.textField, 1, wx.ALL|wx.EXPAND, 5)
         rightP.SetSizer(sizer)
@@ -244,9 +290,8 @@ class ledgui(wx.Frame):
         self.OnTextChanged(None)
 
         # Window Settings
-        iconPath = '/usr/local/share/pixmaps/fiveleds.png'
-        if(path.exists(iconPath)):
-            self.icon = wx.Icon(iconPath, wx.BITMAP_TYPE_PNG)
+        if(path.exists(self.PRODUCT_ICON)):
+            self.icon = wx.Icon(self.PRODUCT_ICON, wx.BITMAP_TYPE_PNG)
             self.SetIcon(self.icon)
         self.SetSize(500, 390)
         self.SetMinSize((500, 390))
@@ -255,6 +300,34 @@ class ledgui(wx.Frame):
 
     def SetCustomTitle(self):
         self.SetTitle(self.PRODUCT_NAME+" ("+self.serialPort+", Device "+str(self.deviceId)+", Page "+self.page+")")
+
+    def OnOpenReadme(self, e):
+        print(e)
+
+    def OnOpenAboutDialog(self, e):
+        info = wx.adv.AboutDialogInfo()
+        if(self.icon != None):
+            info.SetIcon(self.icon)
+        info.SetName(self.PRODUCT_NAME)
+        info.SetVersion(self.PRODUCT_VERSION)
+        info.SetDescription(
+            """LED Display Control Library, Command Line Utility and Graphical User Interface (GUI)."""
+            """\n"""
+            """This library was made for providing Linux support for the following devices: Maplin N00GA - using the AM004-03128/03127 LED Display communication board, Velleman MML16CN, MML16R, MML24CN, McCrypt LED Light Writing 590996 (the Conrad Laufschrift)"""
+        )
+        info.SetCopyright('© 2020 Georg Sieber')
+        info.SetWebSite('https://github.com/schorschii/fiveleds')
+        info.SetLicence('GNU General Public License v3.0')
+        info.AddDeveloper('Georg Sieber (Further Development & GUI) https://github.com/schorschii')
+        info.AddDeveloper('hackerdeen: Midder-57N & pisuke (Base Code) https://github.com/hackerdeen')
+        #info.AddDocWriter('Georg Sieber')
+        #info.AddArtist('Georg Sieber')
+        #info.AddTranslator('Georg Sieber')
+        wx.adv.AboutBox(info, parent=self)
+
+    def OnInsertSpecialChar(self, e):
+        window = fiveledsCharWindow(self)
+        window.Show()
 
     def OnTextChanged(self, e):
         self.statusBar.SetStatusText("Chars: "+str(len(self.textField.GetValue())))
@@ -373,30 +446,6 @@ class ledgui(wx.Frame):
 
     def OnDelete(self, e):
         self.textField.WriteText("")
-
-    def OnOpenReadme(self, e):
-        print(e)
-
-    def OnOpenAboutDialog(self, e):
-        info = wx.adv.AboutDialogInfo()
-        if(self.icon != None):
-            info.SetIcon(self.icon)
-        info.SetName(self.PRODUCT_NAME)
-        info.SetVersion(self.PRODUCT_VERSION)
-        info.SetDescription(
-            """LED Display Control Library, Command Line Utility and Graphical User Interface (GUI)."""
-            """\n"""
-            """This library was made for providing Linux support for the following devices: Maplin N00GA - using the AM004-03128/03127 LED Display communication board, Velleman MML16CN, MML16R, MML24CN, McCrypt LED Light Writing 590996 (the Conrad Laufschrift)"""
-        )
-        info.SetCopyright('© 2020 Georg Sieber')
-        info.SetWebSite('https://github.com/schorschii/fiveleds')
-        info.SetLicence('GNU General Public License v3.0')
-        info.AddDeveloper('Georg Sieber (Further Development & GUI) https://github.com/schorschii')
-        info.AddDeveloper('hackerdeen: Midder-57N & pisuke (Base Code) https://github.com/hackerdeen')
-        #info.AddDocWriter('Georg Sieber')
-        #info.AddArtist('Georg Sieber')
-        #info.AddTranslator('Georg Sieber')
-        wx.adv.AboutBox(info, parent=self)
 
     def OnSendMessage(self, e):
         if(self.SetupConnection()):
@@ -599,7 +648,7 @@ class ledgui(wx.Frame):
 
 def main():
     app = wx.App()
-    window = ledgui(None)
+    window = fiveledsMainWindow(None)
     window.Show()
     app.MainLoop()
 
