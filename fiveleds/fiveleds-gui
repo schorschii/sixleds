@@ -6,6 +6,8 @@ from functools import partial
 import fiveleds
 import wx
 import wx.adv
+import logging
+import time
 
 
 class fiveledsCharWindow(wx.Frame):
@@ -53,13 +55,13 @@ class fiveledsCharWindow(wx.Frame):
         listBoxText = self.listBox.GetString(self.listBox.GetSelection())
         self.parent.textField.WriteText(fiveleds.opage.ttable.get(ord(listBoxText), ""))
 
-
 class fiveledsMainWindow(wx.Frame):
     PRODUCT_NAME = "fiveleds GUI"
     PRODUCT_VERSION = "0.3.0"
     PRODUCT_ICON = '/usr/local/share/pixmaps/fiveleds.png'
 
     PAGES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+    GRAPHICS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
 
     serialPort = "/dev/ttyUSB0"
     fiveledsConfigFile = "~/.fiveleds"
@@ -232,7 +234,9 @@ class fiveledsMainWindow(wx.Frame):
         commandsMenu.AppendSeparator()
         commandsMenu.Append(wx.ID_ANY, 'Insert &Special Function', specialFuntionMenu)
         self.Bind(wx.EVT_MENU, self.OnInsertSpecialChar, commandsMenu.Append(wx.ID_ANY, 'Insert Special &Char...'))
-        #commandsMenu.Append(wx.ID_ANY, 'Edit/Insert &Graphics...') # todo
+        self.Bind(wx.EVT_MENU, self.OnInsertGraphic, commandsMenu.Append(wx.ID_ANY, 'Insert &Graphic...'))
+        commandsMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, self.OnProgramGraphic, commandsMenu.Append(wx.ID_ANY, 'Program &Graphic From File...'))
 
         # Functions Menu
         functionsMenu = wx.Menu()
@@ -328,6 +332,37 @@ class fiveledsMainWindow(wx.Frame):
     def OnInsertSpecialChar(self, e):
         window = fiveledsCharWindow(self)
         window.Show()
+
+    def OnInsertGraphic(self, e):
+        dlg = wx.TextEntryDialog(self, "Enter graphic to insert (A..P)", self.PRODUCT_NAME, "A")
+        if(dlg.ShowModal() != wx.ID_OK): return
+        result = dlg.GetValue()
+        if(result not in self.GRAPHICS):
+            wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
+            return
+        self.textField.WriteText("<G"+result+"1>")
+
+    def OnProgramGraphic(self, e):
+        fileDialog = wx.FileDialog(self,
+            "Choose Graphic File", wildcard="Text Files (*.txt)|*.txt",
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+        )
+        if(fileDialog.ShowModal() == wx.ID_CANCEL): return
+
+        dlg = wx.TextEntryDialog(self, "Please specify graphic which should be overwritten on device (A..P)", self.PRODUCT_NAME, "A")
+        if(dlg.ShowModal() != wx.ID_OK): return
+        graphicid = dlg.GetValue()
+        if(graphicid not in self.GRAPHICS):
+            wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
+            return
+
+        # read file content
+        file = open(fileDialog.GetPath(), "r")
+        content = file.read().splitlines()
+        file.close()
+
+        # send graphic to device
+        self.ld.programgraphic(graphicid, content)
 
     def OnTextChanged(self, e):
         self.statusBar.SetStatusText("Chars: "+str(len(self.textField.GetValue())))
@@ -450,8 +485,7 @@ class fiveledsMainWindow(wx.Frame):
     def OnSendMessage(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter a raw command to send")
-            if(dlg.ShowModal() != wx.ID_OK):
-                return
+            if(dlg.ShowModal() != wx.ID_OK): return
             result = dlg.GetValue()
             if(result == ""):
                 wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
@@ -461,8 +495,7 @@ class fiveledsMainWindow(wx.Frame):
     def OnSetDefaultRunPage(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter a default run page (A..Z)")
-            if(dlg.ShowModal() != wx.ID_OK):
-                return
+            if(dlg.ShowModal() != wx.ID_OK): return
             result = dlg.GetValue()
             if(result not in self.PAGES):
                 wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
@@ -472,8 +505,7 @@ class fiveledsMainWindow(wx.Frame):
     def OnSetId(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter new ID (1..255)")
-            if(dlg.ShowModal() != wx.ID_OK):
-                return
+            if(dlg.ShowModal() != wx.ID_OK): return
             result = dlg.GetValue()
             self.ld.setid(newid=int(result))
 
@@ -484,8 +516,7 @@ class fiveledsMainWindow(wx.Frame):
     def OnSetBrightness(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter brightness level (A..D)", self.PRODUCT_NAME, "A")
-            if(dlg.ShowModal() != wx.ID_OK):
-                return
+            if(dlg.ShowModal() != wx.ID_OK): return
             result = dlg.GetValue()
             if(result not in ["A", "B", "C", "D"]):
                 wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
@@ -495,29 +526,25 @@ class fiveledsMainWindow(wx.Frame):
     def OnSetSchedule(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter which schedule should be edited (e.g. A..E)", self.PRODUCT_NAME, "A")
-            if(dlg.ShowModal() != wx.ID_OK):
-                return
+            if(dlg.ShowModal() != wx.ID_OK): return
             schedule = dlg.GetValue()
             if(schedule not in ["A", "B", "C", "D", "E"]):
                 wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
                 return
 
             dlg = wx.TextEntryDialog(self, "Enter which pages should be shown (e.g. ABDEF). Leave empty to disable this schedule.")
-            if(dlg.ShowModal() != wx.ID_OK):
-                return
+            if(dlg.ShowModal() != wx.ID_OK): return
             pages = dlg.GetValue()
 
             if(pages == ""):
                 self.ld.updatesched(schedule, active=False)
             else:
                 dlg = wx.TextEntryDialog(self, "Enter schedule start time (YYMMDDHHmm).", self.PRODUCT_NAME, "0001010000")
-                if(dlg.ShowModal() != wx.ID_OK):
-                    return
+                if(dlg.ShowModal() != wx.ID_OK): return
                 start = dlg.GetValue()
 
                 dlg = wx.TextEntryDialog(self, "Enter schedule end time (YYMMDDHHmm).", self.PRODUCT_NAME, "9912302359")
-                if(dlg.ShowModal() != wx.ID_OK):
-                    return
+                if(dlg.ShowModal() != wx.ID_OK): return
                 end = dlg.GetValue()
 
                 self.ld.updatesched(schedule, pages, active=True, start=start, end=end)
@@ -534,8 +561,7 @@ class fiveledsMainWindow(wx.Frame):
     def OnSetDisplayTime(self, e):
         if(self.SetupConnection()):
             dlg = wx.TextEntryDialog(self, "Enter display (wait) time (A..Z)")
-            if(dlg.ShowModal() != wx.ID_OK):
-                return
+            if(dlg.ShowModal() != wx.ID_OK): return
             result = dlg.GetValue()
             if(result not in self.PAGES):
                 wx.MessageBox("Invalid input", "Error", wx.ICON_ERROR | wx.OK, self)
@@ -619,6 +645,7 @@ class fiveledsMainWindow(wx.Frame):
         self.laggingFx = fx
 
     def SetupConnection(self, message=True):
+        logging.getLogger().setLevel(logging.INFO)
         self.ld = fiveleds.fiveleds(dev=self.serialPort, conf=self.fiveledsConfigFile, device=self.deviceId)
         if(self.ld.ser == None):
             if(message):
@@ -629,13 +656,14 @@ class fiveledsMainWindow(wx.Frame):
 
     def OnSelectSerialPort(self, e):
         with wx.FileDialog(self,
-            "Choose Serial Port", wildcard="All Files *|*",
+            "Choose Serial Port", "/dev", wildcard="All Files *|*",
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
         ) as fileDialog:
-            if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return
-            wx.MessageBox(fileDialog.GetPath(), "Please confirm", wx.ICON_QUESTION | wx.YES_NO, self)
-        self.SetCustomTitle()
+            if fileDialog.ShowModal() == wx.ID_CANCEL: return
+            if(wx.MessageDialog(self, fileDialog.GetPath(), "Please confirm", wx.ICON_QUESTION | wx.YES_NO).ShowModal() == wx.ID_YES):
+                self.serialPort = fileDialog.GetPath()
+                self.SetupConnection()
+                self.SetCustomTitle()
 
     def OnSendPage(self, e):
         if(self.SetupConnection()):

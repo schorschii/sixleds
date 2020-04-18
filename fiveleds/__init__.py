@@ -592,8 +592,15 @@ class fiveleds():
         """
         changes = 0
         changed = 0
-        if reset:
-            self.send('<D*>')
+
+        # reset display if requested
+        if reset: self.send('<D*>')
+
+        # begin update (turn the display off)
+        self.send("<BE>")
+        sleep(0.1)
+
+        # update pages
         for linenum, line in  self.lines.items():
             for pagenum, page in sorted(line.items()):
                 if page.modified(False) or reset:
@@ -605,6 +612,8 @@ class fiveleds():
                         logging.info("Page " + pagenum + " Failed - " + page.MM)
                 else:
                     logging.info("Page " + pagenum + " Not Changed - " + page.MM)
+
+        # update schedules
         for schednum, sched in self.schedules.items():
             if sched.modified(False) or reset:
                 changes += 1
@@ -622,10 +631,17 @@ class fiveleds():
                         logging.info("Schedule " + schednum + " Failed - Deletion")
             else:
                 logging.info("Schedule " + schednum + " Not Changed - " + sched.PP)
+
+        # end update
+        sleep(0.1)
+        self.send("<BF>")
+
+        # check result
         if changes != changed:
             logging.info('There was some issue with the loading of changes')
+
+        # save the new display config
         if changed > 0:
-            # save the new display config
             logging.info('Changes Pushed')
             self.confput()
 
@@ -694,6 +710,116 @@ class fiveleds():
         else:
             logging.info("ID set - Failed")
 
+    def getcolorbyte(self, colorChar):
+        """Helper function for programgraphic()
+
+        Paramaters
+        -------
+        colorChar: string
+            The char from the graphic input string
+
+        Return
+        ------
+        byte:
+            the corresponding color byte
+        """
+        if  (colorChar == 'A'): return 0b10000000
+        elif(colorChar == 'D'): return 0b01000000
+        elif(colorChar == 'E'): return 0b11000000
+        else: return 0b00000000
+
+    def programgraphic(self, graphicid, graphiccontent):
+        """Will program a graphic to the display
+
+        Paramaters
+        -------
+        graphicid: string
+            The graphic identifier (this graphic will be overridden on device)
+        graphiccontent: string
+            The graphic itself, represented as a string. Each char represents one pixel.
+            Valid chars are: A = red, D = green, E = yellow, @ = off
+            Please have a look at the sample graphic text file.
+
+        Return
+        ------
+        bool:
+            true on success
+        """
+        # default data of one graphic (= 4 blocks)
+        # 0b10 = red, 0b01 = green, 0b11 = yellow, 0b00 = off
+        data = [
+            # block 1 (8x8 px)
+            0xff,0xff, # 2 bytes represents 8 px
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            # block 2 (right of prev block)
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            # block 3 (right of prev block)
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            # block 4 (right of prev block)
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00,
+            0x00,0x00
+        ]
+
+        # parse graphic string
+        charoffset = 0
+        block = 0
+        blocks = []
+        blockok = True
+        for block in [0,1,2,3,4,5,6,7]:
+            for line in [0,1,2,3,4,5,6]:
+                # check if enough data is avail for next block
+                if(charoffset+7 >= len(graphiccontent[line])):
+                    blockok = False
+                    break
+            # parse block if block is ok
+            if(blockok):
+                for line in [0,1,2,3,4,5,6]:
+                    #print(graphiccontent[line][charoffset+0:charoffset+8])
+                    chunk = 0x00
+                    chunk2 = 0x00
+                    for char in [0,1,2,3]:
+                        chunk |= self.getcolorbyte(graphiccontent[line][charoffset+char]) >> (char*2)
+                    for char in [0,1,2,3]:
+                        chunk2 |= self.getcolorbyte(graphiccontent[line][charoffset+char+4]) >> (char*2)
+                    data[(block*16)+(line*2)+0] = chunk
+                    data[(block*16)+(line*2)+1] = chunk2
+                # set next block begin
+                charoffset += 8
+                block += 1
+
+        # convert byte array to string for send() function
+        packet = ""
+        for d in data: packet += chr(d)
+
+        # send payload
+        self.send("<G"+graphicid+"1>"+packet)
+
     def send(self, packet):
         """Send the packet to the display and return the response
 
@@ -707,9 +833,18 @@ class fiveleds():
         bool:
             from the self.response function
         """
-        data = '<ID%02x>' % self.device + packet + self.chsum(packet) + '<E>'
-        logging.info('Send: ' + data)
-        self.ser.write(bytes(data, 'ASCII'))
+        # append device ID and end tag
+        payload = '<ID%02x>' % self.device + packet + self.chsum(packet) + '<E>'
+
+        # correct conversion for binary data (graphics)
+        data = []
+        for char in payload: data.append(ord(char))
+        data = bytes(data)
+
+        # send
+        logging.info('Send: ' + payload)
+        logging.info('Send bytes: ' + ":".join("{:02x}".format(c) for c in data))
+        self.ser.write(data)
         return self.response()
 
     def response(self, expected='ACK'):

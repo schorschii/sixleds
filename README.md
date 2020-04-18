@@ -26,6 +26,7 @@ cd fiveleds
 - Each line setup by the display can have multiple pages controlled by the fiveleds.updateline Function.
 - Each active schedule will used the cycle the display on each line.
 - An on disk backup will be loaded at creation and stored after every change.
+- Uploading custom graphics to the device is supported. Graphics are saved in simple text files where each char represents one pixel. Char 'A' is used for red, 'D' for green, 'E' for yellow and '@' for no light (LED off). Please check out the examples in `sample-graphics`.
 
 ## Quickstart
 After installing, you can use it in following ways to send messages to the LED Display.
