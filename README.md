@@ -9,7 +9,7 @@ This library was made for providing Linux support for the following devices:
 - McCrypt LED Light Writing 590996 (the Conrad Laufschrift)
 
 ## Package Installation
-0. For Windows, you first need to install the driver for the USB-Serial adapter. On Linux and macOS, no additional driver are needed.
+0. For Windows, you first need to install the driver for the USB-Serial adapter (see `driver` folder). On Linux and macOS, no additional driver is needed.
 1. Download and install the `.deb` (Linux), `.dmg` (macOS) or `.exe` (Windows) package from the latest [release on Github](https://github.com/schorschii/sixleds/releases).
 2. You can now start the GUI with the link in your start menu or the CLI with the command `fiveleds`.
 
