@@ -58,7 +58,7 @@ class sixledsCharWindow(wx.Frame):
 class sixledsMainWindow(wx.Frame):
     PRODUCT_NAME = "sixleds GUI"
     PRODUCT_VERSION = "0.4.0"
-    PRODUCT_ICON = '/usr/local/share/pixmaps/sixleds.png'
+    PRODUCT_ICON = '/usr/share/pixmaps/sixleds.png'
 
     PAGES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
     GRAPHICS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]

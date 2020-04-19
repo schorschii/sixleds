@@ -1,5 +1,5 @@
 # sixleds
-**LED Display Control Library, Command Line Utility and Graphical User Interface (GUI)**
+**LED Display Control Library, Command Line Utility (CLI) and Graphical User Interface (GUI)**
 ![Screenshot](.github/screenshot.png)
 
 ## Compatibility
@@ -8,8 +8,12 @@ This library was made for providing Linux support for the following devices:
 - it also works with the Velleman MML16CN, MML16R, MML24CN
 - McCrypt LED Light Writing 590996 (the Conrad Laufschrift)
 
-## Installation
-The installer expects that `python3` and `pip3` is installed on your system and will install the python package and a link for the GUI in your start menu.
+## Package Installation
+1. Download and install the `.deb` (Linux), `.dmg` (macOS) or `.exe` (Windows) package from the latest [release on Github](https://github.com/schorschii/sixleds/releases).
+2. You can now start the GUI with the link in your start menu or the CLI with the command `fiveleds`.
+
+## Manual Installation
+The installation script installs the python package and a link for the GUI in your start menu.
 ```
 # download and go to package dir
 cd sixleds
