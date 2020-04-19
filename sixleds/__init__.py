@@ -5,6 +5,8 @@ import os, sys, serial, logging
 from time import sleep, localtime, strftime
 from datetime import datetime
 import _pickle as pickle
+import platform
+import traceback
 
 
 class dt(datetime):
@@ -416,7 +418,6 @@ class sixleds():
         ------
         dev: string, default='/dev/ttyUSB0'
             The serial device the display is connected to.
-
         conf: string, default='/var/lib/sixleds/status'
             The saved configuration for the display will add '-<device>.conf'
             to whatever you enter here.
@@ -439,7 +440,8 @@ class sixleds():
                 bytesize=serial.EIGHTBITS
             )
         except serial.SerialException as e:
-            self.error ="Failed to connect to Display on {0}: Serial Error{1}: {2}".format(dev, e.errno, e.strerror)
+            traceback.print_exc()
+            self.error = "Failed to connect to Display on {0}: Serial Error{1}: {2}".format(dev, e.errno, e.strerror)
             logging.warning(self.error)
             self.ser = None
 

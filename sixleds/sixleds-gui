@@ -8,6 +8,10 @@ import wx
 import wx.adv
 import logging
 import time
+import platform
+import glob
+import serial
+import sys
 
 
 class sixledsCharWindow(wx.Frame):
@@ -45,7 +49,7 @@ class sixledsCharWindow(wx.Frame):
         self.SetSizer(sizer)
 
         # Window Settings
-        self.SetIcon(self.parent.icon)
+        if(hasattr(self.parent, 'icon')): self.SetIcon(self.parent.icon)
         self.SetSize(400, 390)
         self.SetMinSize((400, 390))
         self.SetTitle("Insert Special Char")
@@ -58,11 +62,13 @@ class sixledsCharWindow(wx.Frame):
 class sixledsMainWindow(wx.Frame):
     PRODUCT_NAME = "sixleds GUI"
     PRODUCT_VERSION = "0.4.0"
-    PRODUCT_ICON = '/usr/share/pixmaps/sixleds.png'
+    PRODUCT_ICON = 'sixleds.png'
+    PRODUCT_ICON_PATH = '/usr/share/pixmaps'
 
     PAGES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
     GRAPHICS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
 
+    serialPorts = []
     serialPort = "/dev/ttyUSB0"
     sixledsConfigFile = "~/.sixleds"
     deviceId = 0
@@ -78,8 +84,29 @@ class sixledsMainWindow(wx.Frame):
 
     def __init__(self, *args, **kwargs):
         super(sixledsMainWindow, self).__init__(*args, **kwargs)
+        self.serialPorts = self.GetSerialPorts()
+        if(len(self.serialPorts) > 0): self.serialPort = self.serialPorts[0]
         self.SetupConnection(message=False)
         self.InitUI()
+
+    def GetSerialPorts(self):
+        if platform.system() == 'Windows':
+            ports = ['COM%s' % (i + 1) for i in range(10)]
+        elif platform.system() == 'Linux':
+            ports = glob.glob('/dev/tty[A-Za-z]*')
+        elif platform.system() == 'Darwin':
+            ports = glob.glob('/dev/tty.*')
+        else:
+            raise EnvironmentError('Unsupported platform')
+        result = []
+        for port in ports:
+            try:
+                s = serial.Serial(port)
+                s.close()
+                result.append(port)
+            except(OSError, serial.SerialException):
+                pass
+        return result
 
     def InitUI(self):
         # Menubar
@@ -293,10 +320,16 @@ class sixledsMainWindow(wx.Frame):
         self.statusBar = self.CreateStatusBar(1)
         self.OnTextChanged(None)
 
-        # Window Settings
-        if(path.exists(self.PRODUCT_ICON)):
-            self.icon = wx.Icon(self.PRODUCT_ICON, wx.BITMAP_TYPE_PNG)
+        # Icon Selection
+        if(getattr(sys, 'frozen', False)):
+            iconpath = path.join(sys._MEIPASS, self.PRODUCT_ICON) # included via pyinstaller (Windows & macOS)
+        else:
+            iconpath = path.join(self.PRODUCT_ICON_PATH, self.PRODUCT_ICON) # installed in pixmaps dir (Linux)
+        if(path.exists(iconpath)):
+            self.icon = wx.Icon(iconpath, wx.BITMAP_TYPE_PNG)
             self.SetIcon(self.icon)
+
+        # Window Settings
         self.SetSize(500, 390)
         self.SetMinSize((500, 390))
         self.SetCustomTitle()
@@ -310,8 +343,7 @@ class sixledsMainWindow(wx.Frame):
 
     def OnOpenAboutDialog(self, e):
         info = wx.adv.AboutDialogInfo()
-        if(self.icon != None):
-            info.SetIcon(self.icon)
+        if(hasattr(self, 'icon')): info.SetIcon(self.icon)
         info.SetName(self.PRODUCT_NAME)
         info.SetVersion(self.PRODUCT_VERSION)
         info.SetDescription(
@@ -646,22 +678,24 @@ class sixledsMainWindow(wx.Frame):
 
     def SetupConnection(self, message=True):
         logging.getLogger().setLevel(logging.INFO)
+        if(hasattr(self, 'ld') and self.ld.isopen()): self.ld.close()
         self.ld = sixleds.sixleds(dev=self.serialPort, conf=self.sixledsConfigFile, device=self.deviceId)
         if(self.ld.ser == None):
             if(message):
-                wx.MessageBox("Cannot send data. Please check if serial port »"+self.serialPort+"« is correct and if you have privileges to use this port (add your user to group dialout via »usermod -a -G dialout USERNAME« and log in again).\n\nIf the error persists, please use the command line tool to examine the error.", "Connection Error", wx.ICON_ERROR | wx.OK, self)
+                messageText = "Cannot send data. Please check if serial port »"+self.serialPort+"« is correct and if you have privileges to use this port (add your user to group dialout via »usermod -a -G dialout USERNAME« and log in again).\n\nIf the error persists, please use the command line tool to examine the error."
+                if(platform.system() == 'Windows' or platform.system() == 'Darwin'):
+                    messageText = "Cannot send data. Please check if serial port »"+self.serialPort+"« is correct.\n\nIf the error persists, please use the command line tool to examine the error."
+                wx.MessageBox(messageText, "Connection Error", wx.ICON_ERROR | wx.OK, self)
             return False
         else:
             return True
 
     def OnSelectSerialPort(self, e):
-        with wx.FileDialog(self,
-            "Choose Serial Port", "/dev", wildcard="All Files *|*",
-            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
-        ) as fileDialog:
-            if fileDialog.ShowModal() == wx.ID_CANCEL: return
-            if(wx.MessageDialog(self, fileDialog.GetPath(), "Please confirm", wx.ICON_QUESTION | wx.YES_NO).ShowModal() == wx.ID_YES):
-                self.serialPort = fileDialog.GetPath()
+        dlg = wx.SingleChoiceDialog(self, "Please select serial port which should be used to communicate with the device.", "Port Selection", self.serialPorts, wx.CHOICEDLG_STYLE)
+        if(dlg.ShowModal() == wx.ID_OK):
+            newPort = dlg.GetStringSelection()
+            if(newPort != self.serialPort):
+                self.serialPort = newPort
                 self.SetupConnection()
                 self.SetCustomTitle()
 
