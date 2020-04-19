@@ -398,7 +398,7 @@ class opage():
         return '<F' + self.FX + '><M' + self.MX + '><W' + self.WX + '><F' + self.FY + '>' + self.MM.translate(self.ttable)
 
 
-class fiveleds():
+class sixleds():
     """A Class to store the lcd setting for the display in the space."""
 
     lines = {'1':{}}
@@ -406,7 +406,7 @@ class fiveleds():
     defaultPage = 'A'
 
 
-    def __init__(self, dev='/dev/ttyUSB0', conf='/var/lib/fiveleds/config', device=0x01):
+    def __init__(self, dev='/dev/ttyUSB0', conf='/var/lib/sixleds/config', device=0x01):
         ''' Create the connection to the display
 
         Set up serial connections.
@@ -417,7 +417,7 @@ class fiveleds():
         dev: string, default='/dev/ttyUSB0'
             The serial device the display is connected to.
 
-        conf: string, default='/var/lib/fiveleds/status'
+        conf: string, default='/var/lib/sixleds/status'
             The saved configuration for the display will add '-<device>.conf'
             to whatever you enter here.
             NOTE! unsire the directory exists and is +wr by service user and group.
@@ -426,8 +426,8 @@ class fiveleds():
 
         Return
         ------
-        :obj: 'fiveleds'
-            The fiveleds Object
+        :obj: 'sixleds'
+            The sixleds Object
         '''
         self.device=device
         try:

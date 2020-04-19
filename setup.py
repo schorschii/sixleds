@@ -15,12 +15,12 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding
     long_description = f.read()
 
 setup(
-    name='fiveleds',
+    name='sixleds',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.3.0',
+    version='0.4.0',
 
     description='Control a LED display',
     long_description=long_description,
@@ -29,7 +29,7 @@ setup(
     url='',
 
     # Author details
-    author='Schorschii',
+    author='schorschii',
     author_email='it@georg-sieber.de',
 
     # Choose your license
@@ -67,7 +67,7 @@ setup(
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
-    py_modules=['fiveleds'],
+    py_modules=['sixleds'],
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
@@ -104,11 +104,11 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     #entry_points={
     #    'console_scripts': [
-    #        'fiveleds=fiveleds:main',
+    #        'sixleds=sixleds:main',
     #    ],
     #},
     scripts=[
-        'fiveleds/fiveleds',
-        'fiveleds/fiveleds-gui'
+        'sixleds/sixleds',
+        'sixleds/sixleds-gui'
     ]
 )

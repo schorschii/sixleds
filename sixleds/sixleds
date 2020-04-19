@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import fiveleds
+import sixleds
 import logging
 
 
@@ -133,7 +133,7 @@ Display Method Characters:
     # A function with a simple text interface to modify the display configuration
     import argparse
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("--conf", default="~/.fiveleds", type=str)
+    parser.add_argument("--conf", default="~/.sixleds", type=str)
     parser.add_argument("--port", default="/dev/ttyUSB0", type=str)
     parser.add_argument("--id", default=0, type=int)
     parser.add_argument("--verbose", action="store_true")
@@ -168,7 +168,7 @@ Display Method Characters:
     print( "Using Serial Port: " + args.port )
     print( "Adressing ID: " + str(args.id) )
 
-    ld = fiveleds.fiveleds(dev=args.port, conf=args.conf, device=args.id)
+    ld = sixleds.sixleds(dev=args.port, conf=args.conf, device=args.id)
 
     if(not ld.isopen()):
         print("Error: Could not open serial port! Exit.")

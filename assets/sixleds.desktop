@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=fiveleds GUI
-Exec=fiveleds-gui
+Name=sixleds GUI
+Exec=sixleds-gui
 Terminal=false
-Icon=fiveleds
+Icon=sixleds
 Categories=Application;Other
 Comment=LED Display Control Software

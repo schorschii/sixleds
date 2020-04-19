@@ -3,16 +3,16 @@
 
 from os import path
 from functools import partial
-import fiveleds
+import sixleds
 import wx
 import wx.adv
 import logging
 import time
 
 
-class fiveledsCharWindow(wx.Frame):
+class sixledsCharWindow(wx.Frame):
     def __init__(self, *args, **kwargs):
-        super(fiveledsCharWindow, self).__init__(*args, **kwargs)
+        super(sixledsCharWindow, self).__init__(*args, **kwargs)
         self.parent = self.GetParent()
         self.InitUI()
 
@@ -25,7 +25,7 @@ class fiveledsCharWindow(wx.Frame):
         self.listBox = wx.ListBox(leftP, wx.ID_ANY, style=wx.LB_SINGLE)
         self.listBox.SetFont(wx.Font(14, wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
         displayItems = []
-        for key, value in fiveleds.opage.ttable.items():
+        for key, value in sixleds.opage.ttable.items():
             displayItems.append(chr(key))
         self.listBox.InsertItems(displayItems, 0)
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -53,18 +53,18 @@ class fiveledsCharWindow(wx.Frame):
 
     def OnClickInsert(self, e):
         listBoxText = self.listBox.GetString(self.listBox.GetSelection())
-        self.parent.textField.WriteText(fiveleds.opage.ttable.get(ord(listBoxText), ""))
+        self.parent.textField.WriteText(sixleds.opage.ttable.get(ord(listBoxText), ""))
 
-class fiveledsMainWindow(wx.Frame):
-    PRODUCT_NAME = "fiveleds GUI"
-    PRODUCT_VERSION = "0.3.0"
-    PRODUCT_ICON = '/usr/local/share/pixmaps/fiveleds.png'
+class sixledsMainWindow(wx.Frame):
+    PRODUCT_NAME = "sixleds GUI"
+    PRODUCT_VERSION = "0.4.0"
+    PRODUCT_ICON = '/usr/local/share/pixmaps/sixleds.png'
 
     PAGES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
     GRAPHICS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
 
     serialPort = "/dev/ttyUSB0"
-    fiveledsConfigFile = "~/.fiveleds"
+    sixledsConfigFile = "~/.sixleds"
     deviceId = 0
 
     page = "A"
@@ -77,7 +77,7 @@ class fiveledsMainWindow(wx.Frame):
     laggingFx = "E"
 
     def __init__(self, *args, **kwargs):
-        super(fiveledsMainWindow, self).__init__(*args, **kwargs)
+        super(sixledsMainWindow, self).__init__(*args, **kwargs)
         self.SetupConnection(message=False)
         self.InitUI()
 
@@ -320,7 +320,7 @@ class fiveledsMainWindow(wx.Frame):
             """This library was made for providing Linux support for the following devices: Maplin N00GA - using the AM004-03128/03127 LED Display communication board, Velleman MML16CN, MML16R, MML24CN, McCrypt LED Light Writing 590996 (the Conrad Laufschrift)"""
         )
         info.SetCopyright('© 2020 Georg Sieber')
-        info.SetWebSite('https://github.com/schorschii/fiveleds')
+        info.SetWebSite('https://github.com/schorschii/sixleds')
         info.SetLicence('GNU General Public License v3.0')
         info.AddDeveloper('Georg Sieber (Further Development & GUI) https://github.com/schorschii')
         info.AddDeveloper('hackerdeen: Midder-57N & pisuke (Base Code) https://github.com/hackerdeen')
@@ -330,7 +330,7 @@ class fiveledsMainWindow(wx.Frame):
         wx.adv.AboutBox(info, parent=self)
 
     def OnInsertSpecialChar(self, e):
-        window = fiveledsCharWindow(self)
+        window = sixledsCharWindow(self)
         window.Show()
 
     def OnInsertGraphic(self, e):
@@ -646,7 +646,7 @@ class fiveledsMainWindow(wx.Frame):
 
     def SetupConnection(self, message=True):
         logging.getLogger().setLevel(logging.INFO)
-        self.ld = fiveleds.fiveleds(dev=self.serialPort, conf=self.fiveledsConfigFile, device=self.deviceId)
+        self.ld = sixleds.sixleds(dev=self.serialPort, conf=self.sixledsConfigFile, device=self.deviceId)
         if(self.ld.ser == None):
             if(message):
                 wx.MessageBox("Cannot send data. Please check if serial port »"+self.serialPort+"« is correct and if you have privileges to use this port (add your user to group dialout via »usermod -a -G dialout USERNAME« and log in again).\n\nIf the error persists, please use the command line tool to examine the error.", "Connection Error", wx.ICON_ERROR | wx.OK, self)
@@ -676,7 +676,7 @@ class fiveledsMainWindow(wx.Frame):
 
 def main():
     app = wx.App()
-    window = fiveledsMainWindow(None)
+    window = sixledsMainWindow(None)
     window.Show()
     app.MainLoop()
 
