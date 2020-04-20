@@ -403,6 +403,7 @@ class sixledsMainWindow(wx.Frame):
         self.page = self.PAGES[self.listBox.GetSelection()]
         self.SetCustomTitle()
         value = self.ld.getline(self.page)
+        self.textField.SetValue("")
         if(value != None):
             self.textField.SetValue(value.MM)
 
