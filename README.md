@@ -1,4 +1,4 @@
-# sixleds
+# ![sixleds](assets/icons/sixleds-big.png)
 **LED Display Control Library, Command Line Utility (CLI) and Graphical User Interface (GUI)**
 ![Screenshot](.github/screenshot.png)
 
@@ -10,20 +10,17 @@ This library was made for providing Linux support for the following devices:
 
 ## Package Installation
 0. For Windows, you first need to install the driver for the USB-Serial adapter (see `driver` folder). On Linux and macOS, no additional driver is needed.
-1. Download and install the `.deb` (Linux), `.dmg` (macOS) or `.exe` (Windows) package from the latest [release on Github](https://github.com/schorschii/sixleds/releases).
-2. You can now start the GUI with the link in your start menu or the CLI with the command `fiveleds`.
+1. Download and install the `.deb` (recommended) or `.appimage` (for Linux), `.dmg` (for macOS) or `.exe` (for Windows) package from the latest [release on Github](https://github.com/schorschii/sixleds/releases).
+2. You can now start the GUI by executing the platform-specific executable. The `.deb` package installs a shortcut to the program in your start menu.
+3. (Only on Linux: the `.deb` package also installs the CLI - you can start it with the command `sixleds`.)
 
-## Manual Installation
-The installation script installs the python package and a link for the GUI in your start menu.
+## Manual Installation (Linux)
 ```
-# download and go to package dir
 cd sixleds
-
-# open install.sh in terminal and enter your sudo password when prompted
-./install.sh
-
-# to uninstall use
-./install.sh --uninstall
+pip3 install .
+mkdir /usr/share/pixmaps/sixleds
+cp assets/icons/* /usr/share/pixmaps/sixleds
+desktop-file-install assets/sixleds.desktop
 ```
 
 ## Functionality
