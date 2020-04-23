@@ -305,7 +305,7 @@ class opage():
         character
             the value of FX
         """
-        if len(MX) == 1 and MX in 'ABQRabqr' and MX != self.MX:
+        if len(MX) == 1 and MX in 'ABCDEQRSTUabcdeqrstu' and MX != self.MX:
             self.MX = MX
             self.modified()
         return self.MX
@@ -789,6 +789,7 @@ class sixleds():
         ]
 
         # parse graphic string
+        graphiccontent = graphiccontent.splitlines()
         charoffset = 0
         block = 0
         blocks = []
