@@ -730,7 +730,7 @@ class sixleds():
         elif(colorChar == 'E'): return 0b11000000
         else: return 0b00000000
 
-    def programgraphic(self, graphicid, graphiccontent):
+    def programgraphic(self, graphicid, blockid, graphiccontent):
         """Will program a graphic to the display
 
         Paramaters
@@ -747,7 +747,12 @@ class sixleds():
         bool:
             true on success
         """
-        # default data of one graphic (= 4 blocks)
+        # check graphic and block parameter
+        if(not graphicid in "ABCDEFGHIJKLMNOP" or not blockid in "12345678"):
+            logging.info("Invalid graphic or block id - abort!")
+            return
+
+        # default data of one graphic (= 4 chars/blocks)
         # 0b10 = red, 0b01 = green, 0b11 = yellow, 0b00 = off
         data = [
             # block 1 (8x8 px)
@@ -792,7 +797,6 @@ class sixleds():
         graphiccontent = graphiccontent.splitlines()
         charoffset = 0
         block = 0
-        blocks = []
         blockok = True
         for block in [0,1,2,3,4,5,6,7]:
             for line in [0,1,2,3,4,5,6]:
@@ -821,7 +825,7 @@ class sixleds():
         for d in data: packet += chr(d)
 
         # send payload
-        self.send("<G"+graphicid+"1>"+packet)
+        self.send("<G"+graphicid+blockid+">"+packet)
 
     def send(self, packet):
         """Send the packet to the display and return the response

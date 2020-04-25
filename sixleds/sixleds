@@ -34,8 +34,9 @@ Operational Paramaters (disables the interactive shell):
  [--display-fx <VALUE>] : display effect to set to the page, <VALUE> should be A..E, Q..U, a..e, q..u
  [--wait-time  <VALUE>] : wait time to set to the page, <VALUE> should be A..Z
 
- --program-graphic <PAGE>  : send graphic to device where <PAGE> is A..Z, requires --file parameter
- --file <FILE>             : the path to graphic file (a simple text file, see sample-graphics folder)
+ --program-graphic <GRAPHIC> : send graphic to device where <GRAPHIC> is A..Z, requires --block and --file parameter
+ --block <BLOCK              : the graphic block to program, range: 1..8
+ --file <FILE>               : the path to graphic file (a simple text file, see sample-graphics folder)
 
  --set-schedule <SCHEDULE> : set schedule - <SCHEDULE> is the schedule slot to modify (A..E)
  --schedule-pages <PAGES>  : set the page display order for this schedule (e.g. ABEFC)
@@ -152,6 +153,7 @@ Display Method Characters:
     parser.add_argument("--lagging-fx", default="E", type=str)
     parser.add_argument("--display-fx", default="Q", type=str)
     parser.add_argument("--program-graphic", default="", type=str)
+    parser.add_argument("--block", default="", type=str)
     parser.add_argument("--file", default="", type=str)
     parser.add_argument("--wait-time", default="A", type=str)
     parser.add_argument("--set-schedule", default="", type=str)
@@ -205,11 +207,11 @@ Display Method Characters:
         ld.updateline(args.set_page, args.content, '1', args.leading_fx, args.display_fx, args.wait_time, args.lagging_fx)
         ld.pushchanges()
         exit(0)
-    elif(args.program_graphic != "" and args.file != ""):
+    elif(args.program_graphic != "" and args.block != "" and args.file != ""):
         file = open(args.file, "r")
         content = file.read()
         file.close()
-        ld.programgraphic(args.program_graphic, content)
+        ld.programgraphic(args.program_graphic, args.block, content)
         exit(0)
     elif(args.set_schedule != ""):
         if args.schedule_pages == '' or args.start == '' or args.end == '':

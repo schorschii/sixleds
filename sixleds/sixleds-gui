@@ -6,6 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from os import path
 from functools import partial
+import webbrowser
 import sixleds
 import logging
 import time
@@ -22,14 +23,21 @@ class QClickLabel(QLabel):
         self.clicked.emit()
         QLabel.mousePressEvent(self, event)
 
-class SixledsGraphicWindow(QDialog):
+class SixledsGraphicWindow(QMainWindow):
+    COLORS = {
+        "Off"    : { "code":"@", "pixmap":"led-off.png" },
+        "Red"    : { "code":"A", "pixmap":"led-red.png" },
+        "Green"  : { "code":"D", "pixmap":"led-green.png" },
+        "Yellow" : { "code":"E", "pixmap":"led-yellow.png" }
+    }
+
     ledsHorizontal = 33
     ledsVertical = 8
     ledWidth = 10
     ledHeight = 10
 
-    def __init__(self, *args, **kwargs):
-        super(SixledsGraphicWindow, self).__init__(*args, **kwargs)
+    def __init__(self, parent=None):
+        super(SixledsGraphicWindow, self).__init__(parent)
         self.InitUI()
 
     def InitUI(self):
@@ -45,18 +53,20 @@ class SixledsGraphicWindow(QDialog):
         buttonClose.clicked.connect(self.OnClose)
 
         self.comboColor = QComboBox()
-        self.comboColor.addItem("off")
-        self.comboColor.addItem("red")
-        self.comboColor.addItem("yellow")
-        self.comboColor.addItem("green")
+        for color, details in self.COLORS.items():
+            self.comboColor.addItem(color)
 
         self.comboPage = QComboBox()
         for page in self.parentWidget().GRAPHICS: self.comboPage.addItem(page)
         self.comboBlock = QComboBox()
         for page in self.parentWidget().GRAPHICS_BLOCK: self.comboBlock.addItem(page)
 
-        self.toolBox = QHBoxLayout()
+        self.toolBox = QVBoxLayout()
+        self.toolBox.addWidget(QLabel("Paint Color:"))
         self.toolBox.addWidget(self.comboColor)
+        buttonFill = QPushButton("Fill")
+        buttonFill.clicked.connect(self.OnFill)
+        self.toolBox.addWidget(buttonFill)
 
         self.buttonBox = QHBoxLayout()
         self.buttonBox.addWidget(self.comboPage)
@@ -72,11 +82,12 @@ class SixledsGraphicWindow(QDialog):
         self.layout = QGridLayout()
 
         self.display = QGridLayout()
+        self.display.setContentsMargins(0,0,0,0)
         for i in range(0, self.ledsHorizontal-1):
             for n in range(0, self.ledsVertical-1):
-                pic = QClickLabel(self)
-                pic.colorCode = "@"
-                pic.setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/led-off.png"))
+                pic = QClickLabel()
+                pic.colorCode = self.COLORS["Off"]["code"]
+                pic.setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+self.COLORS["Off"]["pixmap"]))
                 pic.setFixedWidth(self.ledWidth)
                 pic.setFixedHeight(self.ledHeight)
                 pic.clicked.connect(self.OnLedClicked)
@@ -86,6 +97,8 @@ class SixledsGraphicWindow(QDialog):
         widget.setLayout(self.display)
         widget.setFixedWidth(self.ledsHorizontal*self.ledWidth)
         widget.setFixedHeight(self.ledsVertical*self.ledHeight)
+        widget.setContentsMargins(6,6,12,12)
+        widget.setStyleSheet("background-color: black; border-radius: 6px;")
 
         widget2 = QWidget()
         widget2.setLayout(self.buttonBox)
@@ -101,25 +114,26 @@ class SixledsGraphicWindow(QDialog):
         self.layout.addWidget(widget2, 1, 0)
         self.layout.addWidget(widget3, 2, 0)
 
-        self.setLayout(self.layout)
+        mainWidget = QWidget()
+        mainWidget.setLayout(self.layout)
+        self.setCentralWidget(mainWidget)
         self.setWindowTitle("Graphic Editor")
 
     def OnLedClicked(self):
-        if(self.comboColor.currentText() == "off"):
-            self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/led-off.png"))
-            self.sender().colorCode = "@"
-        elif(self.comboColor.currentText() == "red"):
-            self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/led-red.png"))
-            self.sender().colorCode = "A"
-        elif(self.comboColor.currentText() == "green"):
-            self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/led-green.png"))
-            self.sender().colorCode = "D"
-        elif(self.comboColor.currentText() == "yellow"):
-            self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/led-yellow.png"))
-            self.sender().colorCode = "E"
+        colorInfo = self.COLORS[self.comboColor.currentText()]
+        self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+        self.sender().colorCode = colorInfo["code"]
+
+    def OnFill(self, e):
+        colorInfo = self.COLORS[self.comboColor.currentText()]
+        for i in range(0, self.ledsVertical-1):
+            for n in range(0, self.ledsHorizontal-1):
+                widgetItem = self.display.itemAtPosition(i, n)
+                widgetItem.widget().colorCode = colorInfo["code"]
+                widgetItem.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
 
     def OnOpenFile(self, e):
-        fileName, _ = QFileDialog.getOpenFileName(self, "Choose Graphic File", "", "Text Files (*.txt)")
+        fileName, _ = QFileDialog.getOpenFileName(self, "Choose Graphic File", "", "Text Files (*.txt);;All Files (*.*)")
         if(not fileName): return
 
         file = open(fileName, "r")
@@ -132,24 +146,16 @@ class SixledsGraphicWindow(QDialog):
             for char in line:
                 widgetItem = self.display.itemAtPosition(linecounter, charcounter)
                 if(widgetItem != None):
-                    if(char == "A"):
-                        pixmap = self.parentWidget().PRODUCT_ICON_PATH+"/led-red.png"
-                        widgetItem.widget().colorCode = "A"
-                    elif(char == "D"):
-                        pixmap = self.parentWidget().PRODUCT_ICON_PATH+"/led-yellow.png"
-                        widgetItem.widget().colorCode = "D"
-                    elif(char == "E"):
-                        pixmap = self.parentWidget().PRODUCT_ICON_PATH+"/led-green.png"
-                        widgetItem.widget().colorCode = "E"
-                    else:
-                        pixmap = self.parentWidget().PRODUCT_ICON_PATH+"/led-off.png"
-                        widgetItem.widget().colorCode = "@"
-                    widgetItem.widget().setPixmap(QPixmap(pixmap))
+                    colorInfo = self.COLORS["Off"]
+                    for color, details in self.COLORS.items():
+                        if(details["code"] == char): colorInfo = details
+                    widgetItem.widget().colorCode = colorInfo["code"]
+                    widgetItem.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
                 charcounter += 1
             linecounter += 1
 
     def OnSaveFile(self, e):
-        fileName, _ = QFileDialog.getSaveFileName(self, "Save Graphic File", "", "Text Files (*.txt)")
+        fileName, _ = QFileDialog.getSaveFileName(self, "Save Graphic File", "", "Text Files (*.txt);;All Files (*.*)")
         if(not fileName): return
 
         file = open(fileName, "w")
@@ -168,7 +174,7 @@ class SixledsGraphicWindow(QDialog):
         return content
 
     def OnProgram(self, e):
-        self.parentWidget().ld.programgraphic(self.comboPage.currentText(), self.CompileGraphicToText())
+        self.parentWidget().ld.programgraphic(self.comboPage.currentText(), self.comboBlock.currentText(), self.CompileGraphicToText())
 
     def OnInsert(self, e):
         self.parentWidget().textField.insertPlainText("<G"+self.comboPage.currentText()+self.comboBlock.currentText()+">")
@@ -280,6 +286,7 @@ class SixledsMainWindow(QMainWindow):
             raise EnvironmentError('Unsupported platform')
         result = []
         for port in ports:
+            if("bluetooth" in port): continue # macOS
             try:
                 s = serial.Serial(port)
                 s.close()
@@ -600,12 +607,11 @@ class SixledsMainWindow(QMainWindow):
         self.statusBar.showMessage("Page: "+self.page+", Chars: "+str(len(self.textField.toPlainText())))
 
     def OnOpenReadme(self, e):
-        import webbrowser
         webbrowser.open(self.PRODUCT_WEBSITE)
 
     def OnOpenGraphicDialog(self, e):
         dlg = SixledsGraphicWindow(self)
-        dlg.exec_()
+        dlg.show()
 
     def OnOpenAboutDialog(self, e):
         dlg = SixledsAboutWindow(self)
