@@ -23,6 +23,9 @@ cp assets/icons/* /usr/share/pixmaps/sixleds
 desktop-file-install assets/sixleds.desktop
 ```
 
+## Contributions Welcome!
+I'm happy if you would like to contribute code or sample graphics to this repo. Please open a pull request!
+
 ## Functionality
 - The sixleds object will hold an array of display lines and pages, and an array of Schedules which can be pushed to the device.
 - Each line setup by the display can have multiple pages controlled by the sixleds.updateline Function.
