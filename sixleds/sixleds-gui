@@ -61,12 +61,23 @@ class SixledsGraphicWindow(QMainWindow):
         self.comboBlock = QComboBox()
         for page in self.parentWidget().GRAPHICS_BLOCK: self.comboBlock.addItem(page)
 
+        buttonShiftLeft = QPushButton("<<")
+        buttonShiftRight = QPushButton(">>")
+        buttonShiftLeft.clicked.connect(self.OnShiftLeft)
+        buttonShiftRight.clicked.connect(self.buttonShiftRight)
+        shiftButtonBox = QHBoxLayout()
+        shiftButtonBox.addWidget(buttonShiftLeft)
+        shiftButtonBox.addWidget(buttonShiftRight)
+        shiftButtonBoxWidget = QWidget()
+        shiftButtonBoxWidget.setLayout(shiftButtonBox)
+
         self.toolBox = QVBoxLayout()
         self.toolBox.addWidget(QLabel("Paint Color:"))
         self.toolBox.addWidget(self.comboColor)
         buttonFill = QPushButton("Fill")
         buttonFill.clicked.connect(self.OnFill)
         self.toolBox.addWidget(buttonFill)
+        self.toolBox.addWidget(shiftButtonBoxWidget)
 
         self.buttonBox = QHBoxLayout()
         self.buttonBox.addWidget(self.comboPage)
@@ -91,6 +102,8 @@ class SixledsGraphicWindow(QMainWindow):
                 pic.setFixedWidth(self.ledWidth)
                 pic.setFixedHeight(self.ledHeight)
                 pic.clicked.connect(self.OnLedClicked)
+                pic.setContextMenuPolicy(Qt.CustomContextMenu)
+                pic.customContextMenuRequested.connect(self.OnLedClickedSecondary)
                 self.display.addWidget(pic, n, i)
 
         widget = QWidget()
@@ -109,7 +122,7 @@ class SixledsGraphicWindow(QMainWindow):
         widget4 = QWidget()
         widget4.setLayout(self.toolBox)
 
-        self.layout.addWidget(widget, 0, 0, 1, 0)
+        self.layout.addWidget(widget, 0, 0)
         self.layout.addWidget(widget4, 0, 1)
         self.layout.addWidget(widget2, 1, 0)
         self.layout.addWidget(widget3, 2, 0)
@@ -124,6 +137,11 @@ class SixledsGraphicWindow(QMainWindow):
         self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
         self.sender().colorCode = colorInfo["code"]
 
+    def OnLedClickedSecondary(self):
+        colorInfo = self.COLORS["Off"]
+        self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+        self.sender().colorCode = colorInfo["code"]
+
     def OnFill(self, e):
         colorInfo = self.COLORS[self.comboColor.currentText()]
         for i in range(0, self.ledsVertical-1):
@@ -131,6 +149,52 @@ class SixledsGraphicWindow(QMainWindow):
                 widgetItem = self.display.itemAtPosition(i, n)
                 widgetItem.widget().colorCode = colorInfo["code"]
                 widgetItem.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+
+    def OnShiftLeft(self, e):
+        for i in range(0, self.ledsVertical-1):
+            a = self.display.itemAtPosition(i, 0)
+            prevColorCode = a.widget().colorCode
+            for n in range(self.ledsHorizontal-2, -1, -1):
+                # get widget from grid
+                widgetItemNext = self.display.itemAtPosition(i, n)
+
+                # save current color
+                tmpColorCode = widgetItemNext.widget().colorCode
+                #print(str(n)+" is currenty "+tmpColorCode)
+
+                # override color from previous led
+                colorInfo = self.COLORS["Off"]
+                for color, details in self.COLORS.items():
+                    if(details["code"] == prevColorCode): colorInfo = details
+                widgetItemNext.widget().colorCode = colorInfo["code"]
+                widgetItemNext.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+                #print(str(n)+" overwrite with "+colorInfo["code"])
+
+                # save color for next iteration
+                prevColorCode = tmpColorCode
+
+    def buttonShiftRight(self, e):
+        for i in range(0, self.ledsVertical-1):
+            a = self.display.itemAtPosition(i, self.ledsHorizontal-2)
+            prevColorCode = a.widget().colorCode
+            for n in range(0, self.ledsHorizontal-1, 1):
+                # get widget from grid
+                widgetItemNext = self.display.itemAtPosition(i, n)
+
+                # save current color
+                tmpColorCode = widgetItemNext.widget().colorCode
+                #print(str(n)+" is currenty "+tmpColorCode)
+
+                # override color from previous led
+                colorInfo = self.COLORS["Off"]
+                for color, details in self.COLORS.items():
+                    if(details["code"] == prevColorCode): colorInfo = details
+                widgetItemNext.widget().colorCode = colorInfo["code"]
+                widgetItemNext.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+                #print(str(n)+" overwrite with "+colorInfo["code"])
+
+                # save color for next iteration
+                prevColorCode = tmpColorCode
 
     def OnOpenFile(self, e):
         fileName, _ = QFileDialog.getOpenFileName(self, "Choose Graphic File", "", "Text Files (*.txt);;All Files (*.*)")
@@ -196,7 +260,7 @@ class SixledsAboutWindow(QDialog):
 
         if(hasattr(self.parentWidget(), 'icon')):
             labelImage = QLabel(self)
-            labelImage.setPixmap(QPixmap(self.parentWidget().iconPath))
+            labelImage.setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+self.parentWidget().ABOUT_ICON))
             labelImage.setAlignment(Qt.AlignCenter)
             self.layout.addWidget(labelImage)
 
@@ -243,7 +307,8 @@ class SixledsMainWindow(QMainWindow):
     PRODUCT_NAME      = "sixleds GUI"
     PRODUCT_VERSION   = "0.5.0"
     PRODUCT_WEBSITE   = "https://github.com/schorschii/sixleds"
-    PRODUCT_ICON      = "sixleds.png"
+    PRODUCT_ICON      = "sixleds-icon.png"
+    ABOUT_ICON        = "sixleds.png"
     SEND_ICON         = "send.png"
     PRODUCT_ICON_PATH = "/usr/share/pixmaps/sixleds"
 
