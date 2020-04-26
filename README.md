@@ -64,9 +64,9 @@ sixleds
 ## Development
 ### Build Process
 ```
-# macOS
-pyinstaller -F --noconsole --icon=assets/icons/sixleds-icon.icns --add-data="assets/icons/sixleds.png:/" --add-data="assets/icons/led-green.png;/" --add-data="assets/icons/led-yellow.png;/" --add-data="assets/icons/led-red.png;/" --add-data="assets/icons/led-off.png;/" sixleds/sixleds-gui
+# Linux/macOS
+pyinstaller -F --noconsole --icon=assets/icons/sixleds-icon.icns --add-data="assets/icons/sixleds-icon.png:/" --add-data="assets/icons/sixleds.png:/" --add-data="assets/icons/led-green.png:/" --add-data="assets/icons/led-yellow.png:/" --add-data="assets/icons/led-red.png:/" --add-data="assets/icons/led-off.png:/" sixleds/sixleds-gui
 
 # Windows
-pyinstaller -F --noconsole --icon=assets\icons\sixleds-icon.ico --add-data="assets\icons\sixleds.png;/" --add-data="assets\icons\led-green.png;/" --add-data="assets\icons\led-yellow.png;/" --add-data="assets\icons\led-red.png;/" --add-data="assets\icons\led-off.png;/" sixleds\sixleds-gui
+pyinstaller -F --noconsole --icon=assets\icons\sixleds-icon.ico --add-data="assets\icons\sixleds-icon.png;/" --add-data="assets\icons\sixleds.png;/" --add-data="assets\icons\led-green.png;/" --add-data="assets\icons\led-yellow.png;/" --add-data="assets\icons\led-red.png;/" --add-data="assets\icons\led-off.png;/" sixleds\sixleds-gui
 ```
