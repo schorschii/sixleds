@@ -3,6 +3,6 @@ Type=Application
 Name=sixleds GUI
 Exec=sixleds-gui
 Terminal=false
-Icon=sixleds-icon
+Icon=/usr/share/pixmaps/sixleds/sixleds-icon.png
 Categories=Application;Utility
 Comment=LED Display Control Software
