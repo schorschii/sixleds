@@ -64,7 +64,7 @@ class SixledsGraphicWindow(QMainWindow):
         buttonShiftLeft = QPushButton("<<")
         buttonShiftRight = QPushButton(">>")
         buttonShiftLeft.clicked.connect(self.OnShiftLeft)
-        buttonShiftRight.clicked.connect(self.buttonShiftRight)
+        buttonShiftRight.clicked.connect(self.OnShiftRight)
         shiftButtonBox = QHBoxLayout()
         shiftButtonBox.addWidget(buttonShiftLeft)
         shiftButtonBox.addWidget(buttonShiftRight)
@@ -173,7 +173,7 @@ class SixledsGraphicWindow(QMainWindow):
                 # save color for next iteration
                 prevColorCode = tmpColorCode
 
-    def buttonShiftRight(self, e):
+    def OnShiftRight(self, e):
         for i in range(0, self.ledsVertical-1):
             a = self.display.itemAtPosition(i, self.ledsHorizontal-2)
             prevColorCode = a.widget().colorCode
