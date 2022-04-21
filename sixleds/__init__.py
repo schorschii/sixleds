@@ -459,6 +459,8 @@ class sixleds():
 
     def confput(self):
         '''Save the current config to disk'''
+        if not os.path.isdir(os.path.dirname(self.config)):
+            os.makedirs(os.path.dirname(self.config), exist_ok=True)
         if os.path.isfile(self.config):
             # Clear file
             os.remove(self.config)

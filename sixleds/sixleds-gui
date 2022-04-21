@@ -319,10 +319,10 @@ class SixledsMainWindow(QMainWindow):
     GRAPHICS       = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
     GRAPHICS_BLOCK = ["1", "2", "3", "4", "5", "6", "7", "8"]
 
-    serialPorts       = []
-    serialPort        = "/dev/ttyUSB0"
-    sixledsConfigFile = "~/.sixleds"
-    deviceId          = 0
+    serialPorts    = []
+    serialPort     = "/dev/ttyUSB0"
+    configFile     = "~/.config/sixleds/config"
+    deviceId       = 0
 
     page          = "A"
     line          = "1"
@@ -898,7 +898,7 @@ class SixledsMainWindow(QMainWindow):
     def SetupConnection(self, message=True):
         logging.getLogger().setLevel(logging.INFO)
         if(hasattr(self, 'ld') and self.ld.isopen()): self.ld.close()
-        self.ld = sixleds.sixleds(dev=self.serialPort, conf=self.sixledsConfigFile, device=self.deviceId)
+        self.ld = sixleds.sixleds(dev=self.serialPort, conf=self.configFile, device=self.deviceId)
         if(self.ld.ser == None):
             if(message):
                 messageText = "Cannot send data. Please check if serial port »"+self.serialPort+"« is correct and if you have privileges to use this port (add your user to group dialout via »usermod -a -G dialout USERNAME« and log in again).\n\nIf the error persists, please use the command line tool to examine the error."
