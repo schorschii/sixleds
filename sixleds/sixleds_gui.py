@@ -273,7 +273,7 @@ class SixledsAboutWindow(QDialog):
         labelCopyright = QLabel(self)
         labelCopyright.setText(
             "<br>"
-            "© 2020 <a href='https://github.com/schorschii'>Georg Sieber</a> (Further Development & GUI)"
+            "© 2020-2025 <a href='https://github.com/schorschii'>Georg Sieber</a> (Further Development & GUI)"
             "<br>"
             "© 2019 <a href='https://github.com/hackerdeen'>hackerdeen</a> (Base Code)"
             "<br>"
@@ -535,7 +535,7 @@ class SixledsMainWindow(QMainWindow):
             colorMenu.addAction(actionButton)
 
         insertMenu.addSeparator()
-        specialFxMenu = insertMenu.addMenu('Special &Funtion')
+        specialFxMenu = insertMenu.addMenu('Special &Function')
         specialFx = {
             '<BA>': 'Bell',
             '<KD>': 'Date',
