@@ -12,12 +12,26 @@ This library was made for providing Linux support for the following devices:
 0. For Windows, you first need to install the driver for the USB-Serial adapter (see `driver` folder). On Linux and macOS, no additional driver is needed.
 1. Download and install the `.deb` (recommended) or `.appimage` (for Linux), `.dmg` (for macOS) or `.exe` (for Windows) package from the latest [release on Github](https://github.com/schorschii/sixleds/releases).
 2. You can now start the GUI by executing the platform-specific executable. The `.deb` package installs a shortcut to the program in your start menu.
-3. (Only on Linux: the `.deb` package also installs the CLI - you can start it with the command `sixleds`.)
+3. (Only on Linux: the `.deb` package also installs the CLI - you can start it with the command `sixleds-cli`.)
 
 ## Manual Installation (Linux)
 ```
+# install dependencies
+apt install python3-serial python3-pyqt5
+
+# start directly
 cd sixleds
-pip3 install .
+python3 -m sixleds.sixleds_cli
+python3 -m sixleds.sixleds_gui
+
+# or install in a venv
+python3 -m venv venv
+venv/bin/pip install .
+venv/bin/sixleds-cli
+venv/bin/sixleds-gui
+
+# install system menu shortcut
+# note: replace Exec= in .desktop file with correct path
 mkdir /usr/share/pixmaps/sixleds
 cp assets/icons/* /usr/share/pixmaps/sixleds
 desktop-file-install assets/sixleds.desktop
@@ -36,29 +50,23 @@ I'm happy if you would like to contribute code or sample graphics to this repo. 
 ## Quickstart
 After installing, you can use it in following ways to send messages to the LED Display.
 
-### The GUI
-```
-# open the GUI from your start menu or with this command
-sixleds-gui
-```
-
 ### Command Line
 ```
 # the help command will tell you how to use it
-sixleds --help
+sixleds-cli --help
 
 # example: set text "Hello World" to page "A"
 # please replace "/dev/ttyUSB0" with the serial port where the device is attached
-sixleds --port /dev/ttyUSB0 --set-page A --content "Hello World!"
+sixleds-cli --port /dev/ttyUSB0 --set-page A --content "Hello World!"
 
 # example: set page "A" as default run page
-sixleds --port /dev/ttyUSB0 --set-default A
+sixleds-cli --port /dev/ttyUSB0 --set-default A
 ```
 
 ### Interactive Shell
 ```
 # calling the command line utility without parameters will open the interactive shell
-sixleds
+sixleds-cli
 ```
 
 ## Development
