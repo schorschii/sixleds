@@ -45,7 +45,10 @@ class SixledsScheduleWindow(QtWidgets.QDialog):
         for schedule, details in self.parent.SCHEDULES.items():
             self.comboSchedule.addItem(schedule)
 
-        self.buttonBox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok|QtWidgets.QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok
+            |QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        )
         self.buttonBox.accepted.connect(self.OnSend)
         self.buttonBox.rejected.connect(self.OnClose)
 
@@ -89,6 +92,53 @@ class SixledsScheduleWindow(QtWidgets.QDialog):
     def OnClose(self):
         self.close()
 
+class SixledsGraphicInsertWindow(QtWidgets.QDialog):
+
+    def __init__(self, parent=None):
+        super(SixledsGraphicInsertWindow, self).__init__(parent)
+        self.parent = parent
+        self.InitUI()
+
+    def InitUI(self):
+        self.layout = QtWidgets.QGridLayout()
+
+        self.comboGraphicBlock = QtWidgets.QComboBox()
+        for block in self.parent.GRAPHIC_BLOCKS:
+            self.comboGraphicBlock.addItem(block)
+
+        self.comboGraphicNumber = QtWidgets.QComboBox()
+        for number in self.parent.GRAPHIC_NUMS:
+            self.comboGraphicNumber.addItem(number)
+
+        self.buttonBox = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok
+            |QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        )
+        self.buttonBox.accepted.connect(self.OnInsert)
+        self.buttonBox.rejected.connect(self.OnClose)
+
+        self.layout.addWidget(QtWidgets.QLabel(
+            "Please choose the graphic block and number to insert."
+            +"\n(Program your custom graphic to device first via 'Create/Edit Graphic' tool)"
+        ), 0, 0, 1, 2)
+        self.layout.addWidget(QtWidgets.QLabel("Graphic Block:"), 1, 0)
+        self.layout.addWidget(self.comboGraphicBlock, 1, 1)
+        self.layout.addWidget(QtWidgets.QLabel("Graphic Number:"), 2, 0)
+        self.layout.addWidget(self.comboGraphicNumber, 2, 1)
+        self.layout.addWidget(self.buttonBox, 3, 1)
+
+        self.setLayout(self.layout)
+        self.setWindowTitle("Graphic Insert")
+
+    def OnInsert(self):
+        block = self.comboGraphicBlock.currentText()
+        number = self.comboGraphicNumber.currentText()
+        self.parent.textField.insertPlainText("<G"+block+number+">")
+        self.close()
+
+    def OnClose(self):
+        self.close()
+
 class SixledsGraphicWindow(QtWidgets.QMainWindow):
     COLORS = {
         "Off"    : { "code":"@", "pixmap":"led-off.png" },
@@ -111,7 +161,7 @@ class SixledsGraphicWindow(QtWidgets.QMainWindow):
         buttonOpenFile.clicked.connect(self.OnOpenFile)
         buttonSaveFile = QtWidgets.QPushButton("Save to File...")
         buttonSaveFile.clicked.connect(self.OnSaveFile)
-        buttonProgram = QtWidgets.QPushButton("Program to Device...")
+        buttonProgram = QtWidgets.QPushButton("Program to Device")
         buttonProgram.clicked.connect(self.OnProgram)
         buttonInsert = QtWidgets.QPushButton("Insert into Page")
         buttonInsert.clicked.connect(self.OnInsert)
@@ -123,9 +173,9 @@ class SixledsGraphicWindow(QtWidgets.QMainWindow):
             self.comboColor.addItem(color)
 
         self.comboPage = QtWidgets.QComboBox()
-        for page in self.parentWidget().GRAPHICS: self.comboPage.addItem(page)
+        for page in self.parentWidget().GRAPHIC_BLOCKS: self.comboPage.addItem(page)
         self.comboBlock = QtWidgets.QComboBox()
-        for page in self.parentWidget().GRAPHICS_BLOCK: self.comboBlock.addItem(page)
+        for page in self.parentWidget().GRAPHIC_NUMS: self.comboBlock.addItem(page)
 
         buttonShiftLeft = QtWidgets.QPushButton("<<")
         buttonShiftRight = QtWidgets.QPushButton(">>")
@@ -382,8 +432,8 @@ class SixledsMainWindow(QtWidgets.QMainWindow):
     TIMES          = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
     SCHEDULES      = {"A":{}, "B":{}, "C":{}, "D":{}, "E":{}}
     BRIGHTNESS     = ["A", "B", "C", "D"]
-    GRAPHICS       = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
-    GRAPHICS_BLOCK = ["1", "2", "3", "4", "5", "6", "7", "8"]
+    GRAPHIC_BLOCKS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
+    GRAPHIC_NUMS   = ["1", "2", "3", "4", "5", "6", "7", "8"]
 
     serialPorts    = []
     serialPort     = "/dev/ttyUSB0"
@@ -760,13 +810,8 @@ class SixledsMainWindow(QtWidgets.QMainWindow):
             self.textField.insertPlainText(item)
 
     def OnInsertGraphic(self, e):
-        graphic, ok = QtWidgets.QInputDialog.getItem(self, "Insert Graphic", "Please choose the graphic to insert\n(Please program your custom graphic to device first via 'Create/Edit Graphic' tool)", self.GRAPHICS, 0, False)
-        if(not(ok and graphic)): return
-
-        block, ok = QtWidgets.QInputDialog.getItem(self, "Insert Graphic", "Please choose the graphic block", self.GRAPHICS_BLOCK, 0, False)
-        if(not(ok and block)): return
-
-        self.textField.insertPlainText("<G"+graphic+block+">")
+        dlg = SixledsGraphicInsertWindow(self)
+        dlg.show()
 
     def OnPageChanged(self, e):
         if(len(self.listBox.selectedItems()) == 0): return
