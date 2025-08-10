@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from os import path
+from os import path, getcwd
 from functools import partial
+from PyQt6 import QtWidgets, QtGui, QtCore
 import webbrowser
 import sixleds
 import logging
@@ -16,14 +14,14 @@ import serial
 import sys
 
 
-class QClickLabel(QLabel):
-    clicked = pyqtSignal()
+class QClickLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
 
     def mousePressEvent(self, event):
         self.clicked.emit()
-        QLabel.mousePressEvent(self, event)
+        QtWidgets.QLabel.mousePressEvent(self, event)
 
-class SixledsGraphicWindow(QMainWindow):
+class SixledsGraphicWindow(QtWidgets.QMainWindow):
     COLORS = {
         "Off"    : { "code":"@", "pixmap":"led-off.png" },
         "Red"    : { "code":"A", "pixmap":"led-red.png" },
@@ -41,85 +39,85 @@ class SixledsGraphicWindow(QMainWindow):
         self.InitUI()
 
     def InitUI(self):
-        buttonOpenFile = QPushButton("Open from File...")
+        buttonOpenFile = QtWidgets.QPushButton("Open from File...")
         buttonOpenFile.clicked.connect(self.OnOpenFile)
-        buttonSaveFile = QPushButton("Save to File...")
+        buttonSaveFile = QtWidgets.QPushButton("Save to File...")
         buttonSaveFile.clicked.connect(self.OnSaveFile)
-        buttonProgram = QPushButton("Program to Device...")
+        buttonProgram = QtWidgets.QPushButton("Program to Device...")
         buttonProgram.clicked.connect(self.OnProgram)
-        buttonInsert = QPushButton("Insert into Page")
+        buttonInsert = QtWidgets.QPushButton("Insert into Page")
         buttonInsert.clicked.connect(self.OnInsert)
-        buttonClose = QPushButton("Close")
+        buttonClose = QtWidgets.QPushButton("Close")
         buttonClose.clicked.connect(self.OnClose)
 
-        self.comboColor = QComboBox()
+        self.comboColor = QtWidgets.QComboBox()
         for color, details in self.COLORS.items():
             self.comboColor.addItem(color)
 
-        self.comboPage = QComboBox()
+        self.comboPage = QtWidgets.QComboBox()
         for page in self.parentWidget().GRAPHICS: self.comboPage.addItem(page)
-        self.comboBlock = QComboBox()
+        self.comboBlock = QtWidgets.QComboBox()
         for page in self.parentWidget().GRAPHICS_BLOCK: self.comboBlock.addItem(page)
 
-        buttonShiftLeft = QPushButton("<<")
-        buttonShiftRight = QPushButton(">>")
+        buttonShiftLeft = QtWidgets.QPushButton("<<")
+        buttonShiftRight = QtWidgets.QPushButton(">>")
         buttonShiftLeft.clicked.connect(self.OnShiftLeft)
         buttonShiftRight.clicked.connect(self.OnShiftRight)
-        shiftButtonBox = QHBoxLayout()
+        shiftButtonBox = QtWidgets.QHBoxLayout()
         shiftButtonBox.addWidget(buttonShiftLeft)
         shiftButtonBox.addWidget(buttonShiftRight)
-        shiftButtonBoxWidget = QWidget()
+        shiftButtonBoxWidget = QtWidgets.QWidget()
         shiftButtonBoxWidget.setLayout(shiftButtonBox)
 
-        self.toolBox = QVBoxLayout()
-        self.toolBox.addWidget(QLabel("Paint Color:"))
+        self.toolBox = QtWidgets.QVBoxLayout()
+        self.toolBox.addWidget(QtWidgets.QLabel("Paint Color:"))
         self.toolBox.addWidget(self.comboColor)
-        buttonFill = QPushButton("Fill")
+        buttonFill = QtWidgets.QPushButton("Fill")
         buttonFill.clicked.connect(self.OnFill)
         self.toolBox.addWidget(buttonFill)
         self.toolBox.addWidget(shiftButtonBoxWidget)
 
-        self.buttonBox = QHBoxLayout()
+        self.buttonBox = QtWidgets.QHBoxLayout()
         self.buttonBox.addWidget(self.comboPage)
         self.buttonBox.addWidget(self.comboBlock)
         self.buttonBox.addWidget(buttonProgram)
         self.buttonBox.addWidget(buttonInsert)
 
-        self.buttonBox2 = QHBoxLayout()
+        self.buttonBox2 = QtWidgets.QHBoxLayout()
         self.buttonBox2.addWidget(buttonOpenFile)
         self.buttonBox2.addWidget(buttonSaveFile)
         self.buttonBox2.addWidget(buttonClose)
 
-        self.layout = QGridLayout()
+        self.layout = QtWidgets.QGridLayout()
 
-        self.display = QGridLayout()
+        self.display = QtWidgets.QGridLayout()
         self.display.setContentsMargins(0,0,0,0)
         for i in range(0, self.ledsHorizontal-1):
             for n in range(0, self.ledsVertical-1):
                 pic = QClickLabel()
                 pic.colorCode = self.COLORS["Off"]["code"]
-                pic.setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+self.COLORS["Off"]["pixmap"]))
+                pic.setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+self.COLORS["Off"]["pixmap"]))
                 pic.setFixedWidth(self.ledWidth)
                 pic.setFixedHeight(self.ledHeight)
                 pic.clicked.connect(self.OnLedClicked)
-                pic.setContextMenuPolicy(Qt.CustomContextMenu)
+                pic.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
                 pic.customContextMenuRequested.connect(self.OnLedClickedSecondary)
                 self.display.addWidget(pic, n, i)
 
-        widget = QWidget()
+        widget = QtWidgets.QWidget()
         widget.setLayout(self.display)
         widget.setFixedWidth(self.ledsHorizontal*self.ledWidth)
         widget.setFixedHeight(self.ledsVertical*self.ledHeight)
         widget.setContentsMargins(6,6,12,12)
         widget.setStyleSheet("background-color: black; border-radius: 6px;")
 
-        widget2 = QWidget()
+        widget2 = QtWidgets.QWidget()
         widget2.setLayout(self.buttonBox)
 
-        widget3 = QWidget()
+        widget3 = QtWidgets.QWidget()
         widget3.setLayout(self.buttonBox2)
 
-        widget4 = QWidget()
+        widget4 = QtWidgets.QWidget()
         widget4.setLayout(self.toolBox)
 
         self.layout.addWidget(widget, 0, 0)
@@ -127,19 +125,19 @@ class SixledsGraphicWindow(QMainWindow):
         self.layout.addWidget(widget2, 1, 0)
         self.layout.addWidget(widget3, 2, 0)
 
-        mainWidget = QWidget()
+        mainWidget = QtWidgets.QWidget()
         mainWidget.setLayout(self.layout)
         self.setCentralWidget(mainWidget)
         self.setWindowTitle("Graphic Editor")
 
     def OnLedClicked(self):
         colorInfo = self.COLORS[self.comboColor.currentText()]
-        self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+        self.sender().setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
         self.sender().colorCode = colorInfo["code"]
 
     def OnLedClickedSecondary(self):
         colorInfo = self.COLORS["Off"]
-        self.sender().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+        self.sender().setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
         self.sender().colorCode = colorInfo["code"]
 
     def OnFill(self, e):
@@ -148,7 +146,7 @@ class SixledsGraphicWindow(QMainWindow):
             for n in range(0, self.ledsHorizontal-1):
                 widgetItem = self.display.itemAtPosition(i, n)
                 widgetItem.widget().colorCode = colorInfo["code"]
-                widgetItem.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+                widgetItem.widget().setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
 
     def OnShiftLeft(self, e):
         for i in range(0, self.ledsVertical-1):
@@ -167,7 +165,7 @@ class SixledsGraphicWindow(QMainWindow):
                 for color, details in self.COLORS.items():
                     if(details["code"] == prevColorCode): colorInfo = details
                 widgetItemNext.widget().colorCode = colorInfo["code"]
-                widgetItemNext.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+                widgetItemNext.widget().setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
                 #print(str(n)+" overwrite with "+colorInfo["code"])
 
                 # save color for next iteration
@@ -190,14 +188,14 @@ class SixledsGraphicWindow(QMainWindow):
                 for color, details in self.COLORS.items():
                     if(details["code"] == prevColorCode): colorInfo = details
                 widgetItemNext.widget().colorCode = colorInfo["code"]
-                widgetItemNext.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+                widgetItemNext.widget().setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
                 #print(str(n)+" overwrite with "+colorInfo["code"])
 
                 # save color for next iteration
                 prevColorCode = tmpColorCode
 
     def OnOpenFile(self, e):
-        fileName, _ = QFileDialog.getOpenFileName(self, "Choose Graphic File", "", "Text Files (*.txt);;All Files (*.*)")
+        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Choose Graphic File", "", "Text Files (*.txt);;All Files (*.*)")
         if(not fileName): return
 
         file = open(fileName, "r")
@@ -214,12 +212,12 @@ class SixledsGraphicWindow(QMainWindow):
                     for color, details in self.COLORS.items():
                         if(details["code"] == char): colorInfo = details
                     widgetItem.widget().colorCode = colorInfo["code"]
-                    widgetItem.widget().setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
+                    widgetItem.widget().setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+colorInfo["pixmap"]))
                 charcounter += 1
             linecounter += 1
 
     def OnSaveFile(self, e):
-        fileName, _ = QFileDialog.getSaveFileName(self, "Save Graphic File", "", "Text Files (*.txt);;All Files (*.*)")
+        fileName, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Graphic File", "", "Text Files (*.txt);;All Files (*.*)")
         if(not fileName): return
 
         file = open(fileName, "w")
@@ -247,30 +245,30 @@ class SixledsGraphicWindow(QMainWindow):
         self.close()
 
 
-class SixledsAboutWindow(QDialog):
+class SixledsAboutWindow(QtWidgets.QDialog):
     def __init__(self, *args, **kwargs):
         super(SixledsAboutWindow, self).__init__(*args, **kwargs)
         self.InitUI()
 
     def InitUI(self):
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
+        self.buttonBox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok)
         self.buttonBox.accepted.connect(self.accept)
 
-        self.layout = QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
 
         if(hasattr(self.parentWidget(), 'icon')):
-            labelImage = QLabel(self)
-            labelImage.setPixmap(QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+self.parentWidget().ABOUT_ICON))
+            labelImage = QtWidgets.QLabel(self)
+            labelImage.setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+self.parentWidget().ABOUT_ICON))
             labelImage.setAlignment(Qt.AlignCenter)
             self.layout.addWidget(labelImage)
 
-        labelAppName = QLabel(self)
+        labelAppName = QtWidgets.QLabel(self)
         labelAppName.setText(self.parentWidget().PRODUCT_NAME + " v" + self.parentWidget().PRODUCT_VERSION)
         labelAppName.setStyleSheet("font-weight:bold")
-        labelAppName.setAlignment(Qt.AlignCenter)
+        labelAppName.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(labelAppName)
 
-        labelCopyright = QLabel(self)
+        labelCopyright = QtWidgets.QLabel(self)
         labelCopyright.setText(
             "<br>"
             "© 2020-2025 <a href='https://github.com/schorschii'>Georg Sieber</a> (Further Development & GUI)"
@@ -284,10 +282,10 @@ class SixledsAboutWindow(QDialog):
             "<br>"
         )
         labelCopyright.setOpenExternalLinks(True)
-        labelCopyright.setAlignment(Qt.AlignCenter)
+        labelCopyright.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(labelCopyright)
 
-        labelDescription = QLabel(self)
+        labelDescription = QtWidgets.QLabel(self)
         labelDescription.setText(
             """LED Display Control Library, Command Line Utility (CLI) and Graphical User Interface (GUI)."""
             """\n"""
@@ -303,7 +301,7 @@ class SixledsAboutWindow(QDialog):
         self.setLayout(self.layout)
         self.setWindowTitle("About")
 
-class SixledsMainWindow(QMainWindow):
+class SixledsMainWindow(QtWidgets.QMainWindow):
     PRODUCT_NAME      = "sixleds GUI"
     PRODUCT_VERSION   = "0.5.0"
     PRODUCT_WEBSITE   = "https://github.com/schorschii/sixleds"
@@ -367,26 +365,26 @@ class SixledsMainWindow(QMainWindow):
         # File Menu
         fileMenu = mainMenu.addMenu('&File')
 
-        selectPortAction = QAction('Select Serial &Port...', self)
+        selectPortAction = QtGui.QAction('Select Serial &Port...', self)
         selectPortAction.setShortcut('Ctrl+P')
         selectPortAction.triggered.connect(self.OnSelectSerialPort)
         fileMenu.addAction(selectPortAction)
-        selectDeviceIdAction = QAction('Select &Device ID...', self)
+        selectDeviceIdAction = QtGui.QAction('Select &Device ID...', self)
         selectDeviceIdAction.setShortcut('Ctrl+I')
         selectDeviceIdAction.triggered.connect(self.OnChangeDeviceId)
         fileMenu.addAction(selectDeviceIdAction)
         fileMenu.addSeparator()
-        sendAction = QAction('&Send And Save Page', self)
+        sendAction = QtGui.QAction('&Send And Save Page', self)
         sendAction.setShortcut('Ctrl+S')
         sendAction.triggered.connect(self.OnSendPage)
         fileMenu.addAction(sendAction)
         fileMenu.addSeparator()
-        sendAction = QAction('Create/Edit &Graphic...', self)
+        sendAction = QtGui.QAction('Create/Edit &Graphic...', self)
         sendAction.setShortcut('Ctrl+G')
         sendAction.triggered.connect(self.OnOpenGraphicDialog)
         fileMenu.addAction(sendAction)
         fileMenu.addSeparator()
-        quitAction = QAction('&Quit', self)
+        quitAction = QtGui.QAction('&Quit', self)
         quitAction.setShortcut('Ctrl+Q')
         quitAction.triggered.connect(self.OnQuit)
         fileMenu.addAction(quitAction)
@@ -394,22 +392,22 @@ class SixledsMainWindow(QMainWindow):
         # Edit Menu
         editMenu = mainMenu.addMenu('&Edit')
 
-        cutAction = QAction('&Cut', self)
+        cutAction = QtGui.QAction('&Cut', self)
         cutAction.setShortcut('Ctrl+X')
         cutAction.triggered.connect(self.OnCut)
         editMenu.addAction(cutAction)
 
-        copyAction = QAction('C&opy', self)
+        copyAction = QtGui.QAction('C&opy', self)
         copyAction.setShortcut('Ctrl+C')
         copyAction.triggered.connect(self.OnCopy)
         editMenu.addAction(copyAction)
 
-        pasteAction = QAction('&Paste', self)
+        pasteAction = QtGui.QAction('&Paste', self)
         pasteAction.setShortcut('Ctrl+V')
         pasteAction.triggered.connect(self.OnPaste)
         editMenu.addAction(pasteAction)
 
-        pasteAction = QAction('&Delete', self)
+        pasteAction = QtGui.QAction('&Delete', self)
         pasteAction.setShortcut('Ctrl+D')
         pasteAction.triggered.connect(self.OnDelete)
         editMenu.addAction(pasteAction)
@@ -418,7 +416,7 @@ class SixledsMainWindow(QMainWindow):
         pageMenu = mainMenu.addMenu('&Page')
 
         self.leadingFxMenu = pageMenu.addMenu('&Leading Effect')
-        leadingFxActionGroup = QActionGroup(self)
+        leadingFxActionGroup = QtGui.QActionGroup(self)
         leadingFxActionGroup.setExclusive(True)
         leadingFx = {
             'A': 'Immediate',
@@ -438,13 +436,13 @@ class SixledsMainWindow(QMainWindow):
             'P': 'Random'
         }
         for key, value in leadingFx.items():
-            actionButton = leadingFxActionGroup.addAction(QAction(value, self, checkable=True))
+            actionButton = leadingFxActionGroup.addAction(QtGui.QAction(value, self, checkable=True))
             actionButton.triggered.connect(partial(self.OnSetLeadingFx, key, actionButton))
             actionButton.fxCode = key
             self.leadingFxMenu.addAction(actionButton)
 
         self.speedMenu = pageMenu.addMenu('&Move Speed')
-        speedActionGroup = QActionGroup(self)
+        speedActionGroup = QtGui.QActionGroup(self)
         speedActionGroup.setExclusive(True)
         speed = {
             4: '1 Slow',
@@ -453,13 +451,13 @@ class SixledsMainWindow(QMainWindow):
             1: '4 Fast'
         }
         for key, value in speed.items():
-            actionButton = speedActionGroup.addAction(QAction(value, self, checkable=True))
+            actionButton = speedActionGroup.addAction(QtGui.QAction(value, self, checkable=True))
             actionButton.triggered.connect(partial(self.OnSetSpeed, key, actionButton))
             actionButton.fxCode = key
             self.speedMenu.addAction(actionButton)
 
         self.displayFxMenu = pageMenu.addMenu('&Display Effect')
-        displayFxActionGroup = QActionGroup(self)
+        displayFxActionGroup = QtGui.QActionGroup(self)
         displayFxActionGroup.setExclusive(True)
         displayFx = {
             'A': 'Normal',
@@ -469,17 +467,17 @@ class SixledsMainWindow(QMainWindow):
             'E': 'Song 3'
         }
         for key, value in displayFx.items():
-            actionButton = displayFxActionGroup.addAction(QAction(value, self, checkable=True))
+            actionButton = displayFxActionGroup.addAction(QtGui.QAction(value, self, checkable=True))
             actionButton.triggered.connect(partial(self.OnSetDisplayFx, key, actionButton))
             actionButton.fxCode = key
             self.displayFxMenu.addAction(actionButton)
 
-        actionButton = QAction('Display &Time...', self)
+        actionButton = QtGui.QAction('Display &Time...', self)
         actionButton.triggered.connect(self.OnSetDisplayTime)
         pageMenu.addAction(actionButton)
 
         self.closingFxMenu = pageMenu.addMenu('&Closing Effect')
-        closingFxActionGroup = QActionGroup(self)
+        closingFxActionGroup = QtGui.QActionGroup(self)
         closingFxActionGroup.setExclusive(True)
         closingFx = {
             'A': 'Immediate',
@@ -495,7 +493,7 @@ class SixledsMainWindow(QMainWindow):
             'K': 'Hold'
         }
         for key, value in closingFx.items():
-            actionButton = closingFxActionGroup.addAction(QAction(value, self, checkable=True))
+            actionButton = closingFxActionGroup.addAction(QtGui.QAction(value, self, checkable=True))
             actionButton.triggered.connect(partial(self.OnSetClosingFx, key, actionButton))
             actionButton.fxCode = key
             self.closingFxMenu.addAction(actionButton)
@@ -512,7 +510,7 @@ class SixledsMainWindow(QMainWindow):
             '<AE>': '5x8 (long size)'
         }
         for key, value in font.items():
-            actionButton = QAction(value, self)
+            actionButton = QtGui.QAction(value, self)
             actionButton.triggered.connect(partial(self.OnInsertCmd, key, actionButton))
             fontMenu.addAction(actionButton)
 
@@ -530,7 +528,7 @@ class SixledsMainWindow(QMainWindow):
             '<CS>': 'Rainbow'
         }
         for key, value in color.items():
-            actionButton = QAction(value, self)
+            actionButton = QtGui.QAction(value, self)
             actionButton.triggered.connect(partial(self.OnInsertCmd, key, actionButton))
             colorMenu.addAction(actionButton)
 
@@ -542,49 +540,49 @@ class SixledsMainWindow(QMainWindow):
             '<KT>': 'Time'
         }
         for key, value in specialFx.items():
-            actionButton = QAction(value, self)
+            actionButton = QtGui.QAction(value, self)
             actionButton.triggered.connect(partial(self.OnInsertCmd, key, actionButton))
             specialFxMenu.addAction(actionButton)
 
-        actionButton = QAction('&Special Char...', self)
+        actionButton = QtGui.QAction('&Special Char...', self)
         actionButton.triggered.connect(self.OnInsertSpecialChar)
         insertMenu.addAction(actionButton)
 
-        actionButton = QAction('&Graphic...', self)
+        actionButton = QtGui.QAction('&Graphic...', self)
         actionButton.triggered.connect(self.OnInsertGraphic)
         insertMenu.addAction(actionButton)
 
         # Commands Menu
         commandsMenu = mainMenu.addMenu('&Commands')
-        actionButton = QAction('Send &Raw Command...', self)
+        actionButton = QtGui.QAction('Send &Raw Command...', self)
         actionButton.setShortcut('F3')
         actionButton.triggered.connect(self.OnSendMessage)
         commandsMenu.addAction(actionButton)
-        actionButton = QAction('Set &Default Run Page...', self)
+        actionButton = QtGui.QAction('Set &Default Run Page...', self)
         actionButton.setShortcut('F4')
         actionButton.triggered.connect(self.OnSetDefaultRunPage)
         commandsMenu.addAction(actionButton)
 
         commandsMenu.addSeparator()
-        actionButton = QAction('Set &ID...', self)
+        actionButton = QtGui.QAction('Set &ID...', self)
         actionButton.setShortcut('F5')
         actionButton.triggered.connect(self.OnSetId)
         commandsMenu.addAction(actionButton)
-        actionButton = QAction('Set &Clock', self)
+        actionButton = QtGui.QAction('Set &Clock', self)
         actionButton.setShortcut('F6')
         actionButton.triggered.connect(self.OnSetClock)
         commandsMenu.addAction(actionButton)
-        actionButton = QAction('Set &Brightness...', self)
+        actionButton = QtGui.QAction('Set &Brightness...', self)
         actionButton.setShortcut('F7')
         actionButton.triggered.connect(self.OnSetBrightness)
         commandsMenu.addAction(actionButton)
-        actionButton = QAction('Set &Schedule...', self)
+        actionButton = QtGui.QAction('Set &Schedule...', self)
         actionButton.setShortcut('F8')
         actionButton.triggered.connect(self.OnSetSchedule)
         commandsMenu.addAction(actionButton)
 
         commandsMenu.addSeparator()
-        actionButton = QAction('Delete All Content (&Factory Reset)', self)
+        actionButton = QtGui.QAction('Delete All Content (&Factory Reset)', self)
         actionButton.setShortcut('F9')
         actionButton.triggered.connect(self.OnFactoryReset)
         commandsMenu.addAction(actionButton)
@@ -592,12 +590,12 @@ class SixledsMainWindow(QMainWindow):
         # Help Menu
         helpMenu = mainMenu.addMenu('&Help')
 
-        actionButton = QAction('&Website/Updates', self)
+        actionButton = QtGui.QAction('&Website/Updates', self)
         actionButton.setShortcut('F1')
         actionButton.triggered.connect(self.OnOpenReadme)
         helpMenu.addAction(actionButton)
 
-        actionButton = QAction('&About', self)
+        actionButton = QtGui.QAction('&About', self)
         actionButton.setShortcut('F2')
         actionButton.triggered.connect(self.OnOpenAboutDialog)
         helpMenu.addAction(actionButton)
@@ -606,19 +604,19 @@ class SixledsMainWindow(QMainWindow):
         self.statusBar = self.statusBar()
 
         # Window Content
-        hbox = QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
 
-        self.textField = QTextEdit()
-        font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        self.textField = QtWidgets.QTextEdit()
+        font = QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.SystemFont.FixedFont)
         font.setPointSize(14)
         self.textField.setFont(font)
         self.textField.textChanged.connect(self.OnTextChanged)
-        self.listBox = QListWidget()
+        self.listBox = QtWidgets.QListWidget()
         self.listBox.currentTextChanged.connect(self.OnPageChanged)
         for page in self.PAGES: self.listBox.addItem(page)
         self.listBox.setCurrentRow(0)
 
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
         splitter.addWidget(self.listBox)
         splitter.addWidget(self.textField)
         splitter.setStretchFactor(0, 2)
@@ -626,7 +624,7 @@ class SixledsMainWindow(QMainWindow):
 
         hbox.addWidget(splitter)
 
-        widget = QWidget(self)
+        widget = QtWidgets.QWidget(self)
         widget.setLayout(hbox)
         self.setCentralWidget(widget)
 
@@ -634,22 +632,25 @@ class SixledsMainWindow(QMainWindow):
         if(getattr(sys, 'frozen', False)):
             # included via pyinstaller (Windows & macOS)
             self.PRODUCT_ICON_PATH = sys._MEIPASS
+        elif(path.isfile(getcwd()+'/assets/icons/'+self.PRODUCT_ICON)):
+            # ad hoc execution (not installed via deb package)
+            self.PRODUCT_ICON_PATH = getcwd()+'/assets/icons/'
         self.iconPath = path.join(self.PRODUCT_ICON_PATH, self.PRODUCT_ICON)
         if(path.exists(self.iconPath)):
-            self.icon = QIcon(self.iconPath)
+            self.icon = QtGui.QIcon(self.iconPath)
             self.setWindowIcon(self.icon)
 
         # Toolbar
-        toolbar = QToolBar(self)
+        toolbar = QtWidgets.QToolBar(self)
         self.addToolBar(toolbar)
-        self.portAction = QAction('', self)
+        self.portAction = QtGui.QAction('', self)
         self.portAction.triggered.connect(self.OnSelectSerialPort)
         toolbar.addAction(self.portAction)
-        self.deviceAction = QAction('', self)
+        self.deviceAction = QtGui.QAction('', self)
         self.deviceAction.triggered.connect(self.OnChangeDeviceId)
         toolbar.addAction(self.deviceAction)
         toolbar.addSeparator()
-        self.sendAction = QAction('Send And Save Page', self)
+        self.sendAction = QtGui.QAction('Send And Save Page', self)
         self.sendAction.triggered.connect(self.OnSendPage)
         toolbar.addAction(self.sendAction)
 
@@ -680,21 +681,21 @@ class SixledsMainWindow(QMainWindow):
 
     def OnOpenAboutDialog(self, e):
         dlg = SixledsAboutWindow(self)
-        dlg.exec_()
+        dlg.exec()
 
     def OnInsertSpecialChar(self, e):
         displayItems = []
         for key, value in sixleds.opage.ttable.items():
             displayItems.append(chr(key))
-        item, ok = QInputDialog.getItem(self, "Insert Special Char", None, displayItems, 0, False)
+        item, ok = QtWidgets.QInputDialog.getItem(self, "Insert Special Char", None, displayItems, 0, False)
         if ok and item:
             self.textField.insertPlainText(item)
 
     def OnInsertGraphic(self, e):
-        graphic, ok = QInputDialog.getItem(self, "Insert Graphic", "Please choose the graphic to insert\n(Please program your custom graphic to device first via 'Create/Edit Graphic' tool)", self.GRAPHICS, 0, False)
+        graphic, ok = QtWidgets.QInputDialog.getItem(self, "Insert Graphic", "Please choose the graphic to insert\n(Please program your custom graphic to device first via 'Create/Edit Graphic' tool)", self.GRAPHICS, 0, False)
         if(not(ok and graphic)): return
 
-        block, ok = QInputDialog.getItem(self, "Insert Graphic", "Please choose the graphic block", self.GRAPHICS_BLOCK, 0, False)
+        block, ok = QtWidgets.QInputDialog.getItem(self, "Insert Graphic", "Please choose the graphic block", self.GRAPHICS_BLOCK, 0, False)
         if(not(ok and block)): return
 
         self.textField.insertPlainText("<G"+graphic+block+">")
@@ -800,19 +801,19 @@ class SixledsMainWindow(QMainWindow):
 
     def OnSendMessage(self, e):
         if(self.SetupConnection()):
-            item, ok = QInputDialog.getText(self, "Send Command", "Enter a raw command to send")
+            item, ok = QtWidgets.QInputDialog.getText(self, "Send Command", "Enter a raw command to send")
             if ok and item:
                 self.ld.send(item)
 
     def OnSetDefaultRunPage(self, e):
         if(self.SetupConnection()):
-            item, ok = QInputDialog.getItem(self, "Default Run Page", "Please select a default run page", self.PAGES, 0, False)
+            item, ok = QtWidgets.QInputDialog.getItem(self, "Default Run Page", "Please select a default run page", self.PAGES, 0, False)
             if ok and item:
                 self.ld.send('<RP'+item+'>')
 
     def OnChangeDeviceId(self, e):
         if(self.SetupConnection()):
-            item, ok = QInputDialog.getInt(self, "Change Device ID", "Enter the ID of the device which should be controlled (0..255).\nZero is the broadcast which addresses all connected devices on the serial port.", self.deviceId, 0, 255)
+            item, ok = QtWidgets.QInputDialog.getInt(self, "Change Device ID", "Enter the ID of the device which should be controlled (0..255).\nZero is the broadcast which addresses all connected devices on the serial port.", self.deviceId, 0, 255)
             if ok:
                 self.deviceId = item
                 self.SetupConnection()
@@ -820,7 +821,7 @@ class SixledsMainWindow(QMainWindow):
 
     def OnSetId(self, e):
         if(self.SetupConnection()):
-            item, ok = QInputDialog.getInt(self, "Set Device ID", "Enter the ID which should be assigned to the device (1..255)", self.deviceId, 1, 255)
+            item, ok = QtWidgets.QInputDialog.getInt(self, "Set Device ID", "Enter the ID which should be assigned to the device (1..255)", self.deviceId, 1, 255)
             if ok:
                 self.ld.setid(newid=int(item))
                 self.deviceId = item
@@ -832,25 +833,25 @@ class SixledsMainWindow(QMainWindow):
 
     def OnSetBrightness(self, e):
         if(self.SetupConnection()):
-            item, ok = QInputDialog.getItem(self, "Set Brightness Level", "Please choose new brightness level", self.BRIGHTNESS, 0, False)
+            item, ok = QtWidgets.QInputDialog.getItem(self, "Set Brightness Level", "Please choose new brightness level", self.BRIGHTNESS, 0, False)
             if ok and item:
                 self.ld.brightness(item)
 
     def OnSetSchedule(self, e):
         if(self.SetupConnection()):
-            schedule, ok = QInputDialog.getItem(self, "Set Schedule", "Which schedule should be edited?", self.SCHEDULES, 0, False)
+            schedule, ok = QtWidgets.QInputDialog.getItem(self, "Set Schedule", "Which schedule should be edited?", self.SCHEDULES, 0, False)
             if(not(ok and schedule)): return
 
-            pages, ok = QInputDialog.getText(self, "Set Schedule", "Please enter which pages should be shown in this schedule (e.g. ABDEF). Leave empty to disable this schedule.")
+            pages, ok = QtWidgets.QInputDialog.getText(self, "Set Schedule", "Please enter which pages should be shown in this schedule (e.g. ABDEF). Leave empty to disable this schedule.")
             if(not(ok and pages)): return
 
             if(pages == ""):
                 self.ld.updatesched(schedule, active=False)
             else:
-                start, ok = QInputDialog.getText(self, "Set Schedule", "Please enter schedule start time (YYMMDDHHmm).", QLineEdit.Normal, "0001010000")
+                start, ok = QtWidgets.QInputDialog.getText(self, "Set Schedule", "Please enter schedule start time (YYMMDDHHmm).", QtWidgets.QLineEdit.EchoMode.Normal, "0001010000")
                 if(not(ok and start)): return
 
-                end, ok = QInputDialog.getText(self, "Set Schedule", "Please enter schedule end time (YYMMDDHHmm).", QLineEdit.Normal, "9912302359")
+                end, ok = QtWidgets.QInputDialog.getText(self, "Set Schedule", "Please enter schedule end time (YYMMDDHHmm).", QtWidgets.QLineEdit.EchoMode.Normal, "9912302359")
                 if(not(ok and end)): return
 
                 self.ld.updatesched(schedule, pages, active=True, start=start, end=end)
@@ -866,7 +867,7 @@ class SixledsMainWindow(QMainWindow):
 
     def OnSetDisplayTime(self, e):
         if(self.SetupConnection()):
-            item, ok = QInputDialog.getItem(self, "Display Time", "Please select the display (wait) time.", self.TIMES, self.TIMES.index(self.waitTime), False)
+            item, ok = QtWidgets.QInputDialog.getItem(self, "Display Time", "Please select the display (wait) time.", self.TIMES, self.TIMES.index(self.waitTime), False)
             if ok and item:
                 self.waitTime = item
 
@@ -904,13 +905,13 @@ class SixledsMainWindow(QMainWindow):
                 messageText = "Cannot send data. Please check if serial port »"+self.serialPort+"« is correct and if you have privileges to use this port (add your user to group dialout via »usermod -a -G dialout USERNAME« and log in again).\n\nIf the error persists, please use the command line tool to examine the error."
                 if(platform.system() == 'Windows' or platform.system() == 'Darwin'):
                     messageText = "Cannot send data. Please check if serial port »"+self.serialPort+"« is correct.\n\nIf the error persists, please use the command line tool to examine the error."
-                QMessageBox.critical(self, "Connection Error", messageText)
+                QtWidgets.QMessageBox.critical(self, "Connection Error", messageText)
             return False
         else:
             return True
 
     def OnSelectSerialPort(self, e):
-        item, ok = QInputDialog.getItem(self, "Port Selection", "Please select serial port which should be used to communicate with the device.", self.serialPorts, 0, False)
+        item, ok = QtWidgets.QInputDialog.getItem(self, "Port Selection", "Please select serial port which should be used to communicate with the device.", self.serialPorts, 0, False)
         if ok and item:
             self.serialPort = item
             self.SetupConnection()
@@ -926,9 +927,9 @@ class SixledsMainWindow(QMainWindow):
 
 
 def main():
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     SixledsMainWindow().show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()

@@ -73,7 +73,10 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['pyserial', 'PyQt5'],
+    install_requires=[
+        'pyserial',
+        'PyQt6', # needs: libxcb-cursor0
+    ],
 
     #the required python version
     python_requires='>=3',

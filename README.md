@@ -17,7 +17,7 @@ This library was made for providing Linux support for the following devices:
 ## Manual Installation (Linux)
 ```
 # install dependencies
-apt install python3-serial python3-pyqt5
+apt install python3-serial python3-pyqt6
 
 # start directly
 cd sixleds
