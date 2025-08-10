@@ -21,6 +21,71 @@ class QClickLabel(QtWidgets.QLabel):
         self.clicked.emit()
         QtWidgets.QLabel.mousePressEvent(self, event)
 
+class SixledsScheduleWindow(QtWidgets.QDialog):
+
+    def __init__(self, parent=None):
+        super(SixledsScheduleWindow, self).__init__(parent)
+        self.parent = parent
+        self.InitUI()
+
+    def InitUI(self):
+        self.layout = QtWidgets.QGridLayout()
+
+        self.textPages = QtWidgets.QLineEdit()
+        self.textPages.setPlaceholderText("e.g. ABDEF - leave empty to disable this schedule")
+
+        self.textStart = QtWidgets.QLineEdit()
+        self.textStart.setPlaceholderText("YYMMDDHHmm")
+
+        self.textEnd = QtWidgets.QLineEdit()
+        self.textEnd.setPlaceholderText("YYMMDDHHmm")
+
+        self.comboSchedule = QtWidgets.QComboBox()
+        self.comboSchedule.currentTextChanged.connect(self.OnScheduleChanged)
+        for schedule, details in self.parent.SCHEDULES.items():
+            self.comboSchedule.addItem(schedule)
+
+        self.buttonBox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok|QtWidgets.QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.OnSend)
+        #self.buttonBox.rejected.connect(self.OnClose)
+
+        self.layout.addWidget(QtWidgets.QLabel("Schedule to edit:"), 0, 0)
+        self.layout.addWidget(self.comboSchedule, 0, 1)
+        self.layout.addWidget(QtWidgets.QLabel("Pages to display:"), 1, 0)
+        self.layout.addWidget(self.textPages, 1, 1)
+        self.layout.addWidget(QtWidgets.QLabel("Start date/time:"), 2, 0)
+        self.layout.addWidget(self.textStart, 2, 1)
+        self.layout.addWidget(QtWidgets.QLabel("End date/time:"), 3, 0)
+        self.layout.addWidget(self.textEnd, 3, 1)
+        self.layout.addWidget(self.buttonBox, 4, 1)
+
+        self.setLayout(self.layout)
+        self.setWindowTitle("Schedule Editor")
+
+    def OnScheduleChanged(self, page):
+        self.textPages.setText("")
+        self.textStart.setText("0001010000")
+        self.textEnd.setText("9912302359")
+        if(page in self.parent.SCHEDULES.keys() and "pages" in self.parent.SCHEDULES[page]):
+            self.textPages.setText(self.parent.SCHEDULES[page]["pages"])
+            self.textStart.setText(self.parent.SCHEDULES[page]["start"])
+            self.textEnd.setText(self.parent.SCHEDULES[page]["end"])
+
+    def OnSend(self):
+        selectedSchedule = self.comboSchedule.currentText()
+        if(self.textPages.text() == ""):
+            self.parent.ld.updatesched(selectedSchedule, active=False)
+        else:
+            self.parent.ld.updatesched(selectedSchedule, self.textPages.text().upper(), active=True,
+                start=self.textStart.text(),
+                end=self.textEnd.text()
+            )
+        self.parent.ld.pushchanges()
+        self.parent.SCHEDULES[selectedSchedule]['pages'] = self.textPages.text()
+        self.parent.SCHEDULES[selectedSchedule]['start'] = self.textStart.text()
+        self.parent.SCHEDULES[selectedSchedule]['end'] = self.textEnd.text()
+        self.close()
+
 class SixledsGraphicWindow(QtWidgets.QMainWindow):
     COLORS = {
         "Off"    : { "code":"@", "pixmap":"led-off.png" },
@@ -312,7 +377,7 @@ class SixledsMainWindow(QtWidgets.QMainWindow):
 
     PAGES          = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
     TIMES          = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
-    SCHEDULES      = ["A", "B", "C", "D", "E"]
+    SCHEDULES      = {"A":{}, "B":{}, "C":{}, "D":{}, "E":{}}
     BRIGHTNESS     = ["A", "B", "C", "D"]
     GRAPHICS       = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
     GRAPHICS_BLOCK = ["1", "2", "3", "4", "5", "6", "7", "8"]
@@ -839,24 +904,8 @@ class SixledsMainWindow(QtWidgets.QMainWindow):
 
     def OnSetSchedule(self, e):
         if(self.SetupConnection()):
-            schedule, ok = QtWidgets.QInputDialog.getItem(self, "Set Schedule", "Which schedule should be edited?", self.SCHEDULES, 0, False)
-            if(not(ok and schedule)): return
-
-            pages, ok = QtWidgets.QInputDialog.getText(self, "Set Schedule", "Please enter which pages should be shown in this schedule (e.g. ABDEF). Leave empty to disable this schedule.")
-            if(not(ok and pages)): return
-
-            if(pages == ""):
-                self.ld.updatesched(schedule, active=False)
-            else:
-                start, ok = QtWidgets.QInputDialog.getText(self, "Set Schedule", "Please enter schedule start time (YYMMDDHHmm).", QtWidgets.QLineEdit.EchoMode.Normal, "0001010000")
-                if(not(ok and start)): return
-
-                end, ok = QtWidgets.QInputDialog.getText(self, "Set Schedule", "Please enter schedule end time (YYMMDDHHmm).", QtWidgets.QLineEdit.EchoMode.Normal, "9912302359")
-                if(not(ok and end)): return
-
-                self.ld.updatesched(schedule, pages, active=True, start=start, end=end)
-
-            self.ld.pushchanges()
+            dlg = SixledsScheduleWindow(self)
+            dlg.show()
 
     def OnFactoryReset(self, e):
         if(self.SetupConnection()):
