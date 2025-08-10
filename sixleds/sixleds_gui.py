@@ -47,7 +47,7 @@ class SixledsScheduleWindow(QtWidgets.QDialog):
 
         self.buttonBox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok|QtWidgets.QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox.accepted.connect(self.OnSend)
-        #self.buttonBox.rejected.connect(self.OnClose)
+        self.buttonBox.rejected.connect(self.OnClose)
 
         self.layout.addWidget(QtWidgets.QLabel("Schedule to edit:"), 0, 0)
         self.layout.addWidget(self.comboSchedule, 0, 1)
@@ -84,6 +84,9 @@ class SixledsScheduleWindow(QtWidgets.QDialog):
         self.parent.SCHEDULES[selectedSchedule]['pages'] = self.textPages.text()
         self.parent.SCHEDULES[selectedSchedule]['start'] = self.textStart.text()
         self.parent.SCHEDULES[selectedSchedule]['end'] = self.textEnd.text()
+        self.close()
+
+    def OnClose(self):
         self.close()
 
 class SixledsGraphicWindow(QtWidgets.QMainWindow):
