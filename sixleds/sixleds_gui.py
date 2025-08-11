@@ -664,9 +664,11 @@ class SixledsMainWindow(QtWidgets.QMainWindow):
             actionButton.triggered.connect(partial(self.OnInsertCmd, key, actionButton))
             specialFxMenu.addAction(actionButton)
 
-        actionButton = QtGui.QAction('&Special Char...', self)
-        actionButton.triggered.connect(self.OnInsertSpecialChar)
-        insertMenu.addAction(actionButton)
+        specialCharMenu = insertMenu.addMenu('&Special Char...')
+        for key, value in sixleds.opage.ttable.items():
+            actionButton = QtGui.QAction(chr(key), self)
+            actionButton.triggered.connect(partial(self.OnInsertSpecialChar, chr(key), actionButton))
+            specialCharMenu.addAction(actionButton)
 
         actionButton = QtGui.QAction('&Graphic...', self)
         actionButton.triggered.connect(self.OnInsertGraphic)
@@ -803,13 +805,8 @@ class SixledsMainWindow(QtWidgets.QMainWindow):
         dlg = SixledsAboutWindow(self)
         dlg.exec()
 
-    def OnInsertSpecialChar(self, e):
-        displayItems = []
-        for key, value in sixleds.opage.ttable.items():
-            displayItems.append(chr(key))
-        item, ok = QtWidgets.QInputDialog.getItem(self, "Insert Special Char", None, displayItems, 0, False)
-        if ok and item:
-            self.textField.insertPlainText(item)
+    def OnInsertSpecialChar(self, key, button):
+        self.textField.insertPlainText(key)
 
     def OnInsertGraphic(self, e):
         dlg = SixledsGraphicInsertWindow(self)
