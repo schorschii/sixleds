@@ -379,7 +379,7 @@ class SixledsAboutWindow(QtWidgets.QDialog):
         if(hasattr(self.parentWidget(), 'icon')):
             labelImage = QtWidgets.QLabel(self)
             labelImage.setPixmap(QtGui.QPixmap(self.parentWidget().PRODUCT_ICON_PATH+"/"+self.parentWidget().ABOUT_ICON))
-            labelImage.setAlignment(Qt.AlignCenter)
+            labelImage.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             self.layout.addWidget(labelImage)
 
         labelAppName = QtWidgets.QLabel(self)
