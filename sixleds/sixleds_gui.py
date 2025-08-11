@@ -121,9 +121,9 @@ class SixledsGraphicInsertWindow(QtWidgets.QDialog):
             "Please choose the graphic block and number to insert."
             +"\n(Program your custom graphic to device first via 'Create/Edit Graphic' tool)"
         ), 0, 0, 1, 2)
-        self.layout.addWidget(QtWidgets.QLabel("Graphic Block:"), 1, 0)
+        self.layout.addWidget(QtWidgets.QLabel("Block:"), 1, 0)
         self.layout.addWidget(self.comboGraphicBlock, 1, 1)
-        self.layout.addWidget(QtWidgets.QLabel("Graphic Number:"), 2, 0)
+        self.layout.addWidget(QtWidgets.QLabel("Number:"), 2, 0)
         self.layout.addWidget(self.comboGraphicNumber, 2, 1)
         self.layout.addWidget(self.buttonBox, 3, 1)
 
@@ -172,10 +172,10 @@ class SixledsGraphicWindow(QtWidgets.QMainWindow):
         for color, details in self.COLORS.items():
             self.comboColor.addItem(color)
 
-        self.comboPage = QtWidgets.QComboBox()
-        for page in self.parentWidget().GRAPHIC_BLOCKS: self.comboPage.addItem(page)
         self.comboBlock = QtWidgets.QComboBox()
-        for page in self.parentWidget().GRAPHIC_NUMS: self.comboBlock.addItem(page)
+        for page in self.parentWidget().GRAPHIC_BLOCKS: self.comboBlock.addItem(page)
+        self.comboNumber = QtWidgets.QComboBox()
+        for page in self.parentWidget().GRAPHIC_NUMS: self.comboNumber.addItem(page)
 
         buttonShiftLeft = QtWidgets.QPushButton("<<")
         buttonShiftRight = QtWidgets.QPushButton(">>")
@@ -195,11 +195,13 @@ class SixledsGraphicWindow(QtWidgets.QMainWindow):
         self.toolBox.addWidget(buttonFill)
         self.toolBox.addWidget(shiftButtonBoxWidget)
 
-        self.buttonBox = QtWidgets.QHBoxLayout()
-        self.buttonBox.addWidget(self.comboPage)
-        self.buttonBox.addWidget(self.comboBlock)
-        self.buttonBox.addWidget(buttonProgram)
-        self.buttonBox.addWidget(buttonInsert)
+        self.buttonBox = QtWidgets.QGridLayout()
+        self.buttonBox.addWidget(QtWidgets.QLabel("Block:"), 0, 0)
+        self.buttonBox.addWidget(self.comboBlock, 0, 1)
+        self.buttonBox.addWidget(QtWidgets.QLabel("Number:"), 1, 0)
+        self.buttonBox.addWidget(self.comboNumber, 1, 1)
+        self.buttonBox.addWidget(buttonProgram, 2, 0, 1, 2)
+        self.buttonBox.addWidget(buttonInsert, 3, 0, 1, 2)
 
         self.buttonBox2 = QtWidgets.QHBoxLayout()
         self.buttonBox2.addWidget(buttonOpenFile)
@@ -241,7 +243,7 @@ class SixledsGraphicWindow(QtWidgets.QMainWindow):
         self.layout.addWidget(widget, 0, 0)
         self.layout.addWidget(widget4, 0, 1)
         self.layout.addWidget(widget2, 1, 0)
-        self.layout.addWidget(widget3, 2, 0)
+        self.layout.addWidget(widget3, 2, 0, 1, 2)
 
         mainWidget = QtWidgets.QWidget()
         mainWidget.setLayout(self.layout)
@@ -354,10 +356,10 @@ class SixledsGraphicWindow(QtWidgets.QMainWindow):
         return content
 
     def OnProgram(self, e):
-        self.parentWidget().ld.programgraphic(self.comboPage.currentText(), self.comboBlock.currentText(), self.CompileGraphicToText())
+        self.parentWidget().ld.programgraphic(self.comboBlock.currentText(), self.comboNumber.currentText(), self.CompileGraphicToText())
 
     def OnInsert(self, e):
-        self.parentWidget().textField.insertPlainText("<G"+self.comboPage.currentText()+self.comboBlock.currentText()+">")
+        self.parentWidget().textField.insertPlainText("<G"+self.comboBlock.currentText()+self.comboNumber.currentText()+">")
 
     def OnClose(self, e):
         self.close()
