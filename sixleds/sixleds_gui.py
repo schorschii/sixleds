@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from . import __version__, __author__, __copyright__, __website__, __license__
 from os import path, getcwd
 from functools import partial
 from PyQt6 import QtWidgets, QtGui, QtCore
@@ -383,7 +384,7 @@ class SixledsAboutWindow(QtWidgets.QDialog):
             self.layout.addWidget(labelImage)
 
         labelAppName = QtWidgets.QLabel(self)
-        labelAppName.setText(self.parentWidget().PRODUCT_NAME + " v" + self.parentWidget().PRODUCT_VERSION)
+        labelAppName.setText(self.parentWidget().PRODUCT_NAME + " v" + __version__)
         labelAppName.setStyleSheet("font-weight:bold")
         labelAppName.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.layout.addWidget(labelAppName)
@@ -391,15 +392,15 @@ class SixledsAboutWindow(QtWidgets.QDialog):
         labelCopyright = QtWidgets.QLabel(self)
         labelCopyright.setText(
             "<br>"
-            "© 2020-2025 <a href='https://github.com/schorschii'>Georg Sieber</a> (Further Development & GUI)"
-            "<br>"
-            "© 2019 <a href='https://github.com/hackerdeen'>hackerdeen</a> (Base Code)"
-            "<br>"
-            "<br>"
-            "GNU General Public License v3.0"
-            "<br>"
-            "<a href='"+self.parentWidget().PRODUCT_WEBSITE+"'>"+self.parentWidget().PRODUCT_WEBSITE+"</a>"
-            "<br>"
+            +__copyright__+" <a href='https://github.com/schorschii'>"+__author__+"</a> (Further Development & GUI)"
+            +"<br>"
+            +"© 2019 <a href='https://github.com/hackerdeen'>hackerdeen</a> (Base Code)"
+            +"<br>"
+            +"<br>"
+            +__license__
+            +"<br>"
+            +"<a href='"+__website__+"'>"+__website__+"</a>"
+            +"<br>"
         )
         labelCopyright.setOpenExternalLinks(True)
         labelCopyright.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -423,8 +424,6 @@ class SixledsAboutWindow(QtWidgets.QDialog):
 
 class SixledsMainWindow(QtWidgets.QMainWindow):
     PRODUCT_NAME      = "sixleds GUI"
-    PRODUCT_VERSION   = "0.5.0"
-    PRODUCT_WEBSITE   = "https://github.com/schorschii/sixleds"
     PRODUCT_ICON      = "sixleds-icon.png"
     ABOUT_ICON        = "sixleds.png"
     SEND_ICON         = "send.png"
@@ -778,14 +777,14 @@ class SixledsMainWindow(QtWidgets.QMainWindow):
 
         # Window Settings
         self.setMinimumSize(520, 410)
-        self.setWindowTitle(self.PRODUCT_NAME+" v"+self.PRODUCT_VERSION)
+        self.setWindowTitle(self.PRODUCT_NAME+" v"+__version__)
 
         # Load Initial Page
         self.OnTextChanged()
         self.UpdatePortAndDeviceText()
 
         # Show Donation Note
-        self.statusBar.showMessage("If you like sixleds please consider making a donation to support further development ("+self.PRODUCT_WEBSITE+").")
+        self.statusBar.showMessage("If you like sixleds please consider making a donation to support further development ("+__website__+").")
 
     def UpdatePortAndDeviceText(self):
         self.portAction.setText('Port: '+self.serialPort)
@@ -795,7 +794,7 @@ class SixledsMainWindow(QtWidgets.QMainWindow):
         self.statusBar.showMessage("Page: "+self.page+", Chars: "+str(len(self.textField.toPlainText())))
 
     def OnOpenReadme(self, e):
-        webbrowser.open(self.PRODUCT_WEBSITE)
+        webbrowser.open(__website__)
 
     def OnOpenGraphicDialog(self, e):
         dlg = SixledsGraphicWindow(self)

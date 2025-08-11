@@ -9,6 +9,16 @@ import platform
 import traceback
 
 
+__title__     = 'LAPS4LINUX'
+__author__    = 'Georg Sieber'
+__copyright__ = '© 2020-2025'
+__license__   = 'GPL-3.0'
+__version__   = '1.0.0'
+__website__   = 'https://github.com/schorschii/sixleds'
+
+__all__ = [__author__, __license__, __version__]
+
+
 class dt(datetime):
     ''' Datetime Subclass
     A datetime object with a special output for the display schedule

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from . import __version__, __author__, __copyright__, __website__, __license__
 import sixleds
+import argparse
 import logging
 
 
 def main():
-    version = '0.2.0'
     helpCommandLine = '''
 Command Line Parameters
 -----------------------
@@ -135,7 +136,6 @@ Display Method Characters:
 '''
 
     # A function with a simple text interface to modify the display configuration
-    import argparse
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--conf", default="~/.config/sixleds/config", type=str)
     parser.add_argument("--port", default="/dev/ttyUSB0", type=str)
@@ -164,8 +164,13 @@ Display Method Characters:
     parser.add_argument("--content", default="", type=str)
     args = parser.parse_args()
 
-    if(args.version):
-        print(version)
+    if(args.help):
+        print(helpCommandLine)
+        print(helpMagicStrings)
+        print(__copyright__+" "+__author__+" - "+__website__)
+        exit(0)
+    elif(args.version):
+        print(__version__)
         exit(0)
 
     if(args.verbose):
@@ -181,11 +186,7 @@ Display Method Characters:
         print("Error: Could not open serial port! Exit.")
         exit(1)
 
-    if(args.help):
-        print(helpCommandLine)
-        print(helpMagicStrings)
-        exit(0)
-    elif(args.print_config):
+    if(args.print_config):
         ld.show()
         exit(0)
     elif(args.send != ""):
